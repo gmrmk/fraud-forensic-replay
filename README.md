@@ -15,7 +15,7 @@ This is an independent project. All data is synthetic, and every person, merchan
 is fictional.
 
 Built with [Claude Code](https://claude.com/claude-code). Claude is a contributor to this
-repository.
+repository. Made using Mythos 5.2 Defense.
 
 ## 1. What it is
 
