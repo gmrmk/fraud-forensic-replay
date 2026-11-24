@@ -1,0 +1,1 @@
+[{"id":"fc-01","timestamp":"2026-11-09T08:00:00+00:00","failed_calls":142,"cause":"retention_conflict"},{"id":"fc-02","timestamp":"2026-11-10T08:00:00+00:00","failed_calls":417,"cause":"retention_conflict"},{"id":"fc-03","timestamp":"2026-11-11T08:00:00+00:00","failed_calls":99,"cause":"retention_conflict"}]

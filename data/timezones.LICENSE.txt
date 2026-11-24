@@ -1,0 +1,68 @@
+Vendored data attribution - UTC timezone offset bands
+======================================================
+
+File:        timezones.geojson  (FeatureCollection "timezones_wVVG8")
+Source:      treyerl/timezones - https://github.com/treyerl/timezones
+License:     MIT
+Retrieved:   2026-06-18
+Projection:  WGS84 / EPSG:4326 (lng, lat)
+Content:     UTC offset bands. Each feature's only property `name` is the offset
+             string in hours (e.g. "-6", "+1", "-9.5"); geometry is Polygon /
+             MultiPolygon. 38 offset-band features.
+Filtered:    The upstream file ships 39 features; one ("what3") is a null-geometry
+             sentinel that carries no offset band and renders nothing. It was
+             removed so every feature is a real offset band (the label-is-offset
+             contract). No band geometry was altered. Offsets present: -12 .. +14.
+
+Usage in this project
+---------------------
+Served at the runtime path /data/timezones.geojson and lazy-fetched (never
+statically bundled) by the investigator globe's opt-in "Time zones" overlay, which
+draws a thin offset-boundary line, a translucent fill and a "UTC+1" label per
+band, and highlights the band holding the selected record
+(src/lib/globe/tzBands.ts). The day/night terminator
+drawn alongside is computed locally from the playhead (src/lib/terminator.ts) and
+is NOT derived from this dataset.
+
+This NOTICE is kept next to the asset (mirroring the OFL-*.txt font licenses in
+public/fonts/) per the project data-integrity rule: vendored-data provenance and
+license are recorded, never papered over. A clickable credit also appears under
+the "Time zones" switch in the settings gear menu (src/components/ThemeSwitcher.tsx).
+
+Known approximations (measured 2026-10-05 against tzBandAt)
+----------------------------------------------------------
+- Standard offsets only: no DST, and no +12:45 band, so Chatham (-176.5, -43.9)
+  resolves to +12.
+- Band seams do not always match and some bands overlap in slivers. Of all
+  38034 ring vertices, 37794 fall in exactly 1 band, 104 in 2 or more and 136
+  in none (e.g. (172.5, 50.8846) between +11 and +12). A point on such a seam gets no
+  highlight, or the first matching band in file order (Timor edges, the Fergana
+  enclaves). Interior city points resolve correctly: Dili +9, Fergana +5,
+  Osh +6, Yangon +6.5, Kathmandu +5:45.
+
+MIT License
+-----------
+The treyerl/timezones repository is published under the MIT License. Its licence
+text, as read in the file LICENSE on that repository's master branch on 2026-11-14:
+
+MIT License
+
+Copyright (c) 2016 Lukas Treyer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
