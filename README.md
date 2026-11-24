@@ -1,5 +1,21 @@
 # Fraud Forensic Replay
 
+Built by Jonah Butterbaugh, a fraud investigator who works account takeover and payment fraud
+cases. Fraud Forensic Replay shows how an investigator reads a case: you step through each event,
+see which rules fired, and see the decision and the evidence behind it.
+
+The three cases are card fraud, an account takeover, and a key takeover on an AI platform. In the
+last one, one new device signs in to console seats at nine organizations, creates an API key in
+each, and that night every key spends up to 58 times its organization's usual hourly rate.
+
+Try it in 90 seconds: open the card fraud case
+(https://gmrmk.github.io/fraud-forensic-replay/?scenario=card-fraud&theme=light) and follow section 4.
+
+This is an independent project. All data is synthetic, and every person, merchant and organization
+is fictional.
+
+Built with [Claude Code](https://claude.com/claude-code).
+
 ## 1. What it is
 
 A tool for fraud investigators. The investigator app puts cases on a 3D globe with a timeline: you
@@ -41,6 +57,23 @@ API key, and that night each key spends from Singapore at up to about 58 times i
 median hour. Two other cases are cleared or held: a new laptop on the company VPN, and a planned
 batch run not yet confirmed.
 https://gmrmk.github.io/fraud-forensic-replay/?scenario=platform-access&theme=light
+
+The other five, one line each, under their names in the Scenario menu:
+
+- **Platform · one key, many networks** (`key-many-networks`): one static API key and five seats
+  change network again and again, seats of twelve organisations redeem a limit reset within four
+  minutes of an offer opening, and a daily request count steps up more than sevenfold.
+- **Platform · runs and a shared key** (`agent-runs-shared-key`): a swarm of workers runs five
+  times in a week on shared API keys, and one key reaches two workspaces, one of which holds health
+  data.
+- **Platform · seats on two networks** (`seats-two-networks`): five seats send 1,122 requests in
+  seven days, and 14 times a seat is seen on a second network.
+- **Platform · daily volume and failed calls** (`volume-step`): one workspace's daily request count
+  holds near 26,000 for seven days, then reads 83,810 and 129,660, and on three days a separate
+  path of calls fails every time.
+- **Platform · failed sign-ins, then a grant** (`seat-failed-signins`): failed sign-ins on one
+  seat, then a sign-in, a credential grant, limit resets and a burst of requests, beside a steady
+  seat of the same organisation.
 
 ## 4. The 90 second path
 
