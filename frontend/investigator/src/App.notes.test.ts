@@ -27,6 +27,15 @@ describe("App: custom notes wiring", () => {
     expect(appSource).toContain("<NotesMenu lookup={noteLookup} />");
   });
 
+  it("mounts the map shape button between the Notes menu and Reset view", () => {
+    const notes = at("<NotesMenu");
+    const shape = at("<MapModeButton");
+    const reset = at("<ResetViewButton");
+    expect(notes).toBeLessThan(shape);
+    expect(shape).toBeLessThan(reset);
+    expect(appSource).toContain("<MapModeButton />");
+  });
+
   it("mounts the globe layer of marks with the record lookup, beside the pivot windows", () => {
     expect(appSource).toContain("<NoteGlobeLayer map={mapInstance} lookup={noteLookup} />");
     expect(appSource).toContain("lookupFromContext(matchContext)");

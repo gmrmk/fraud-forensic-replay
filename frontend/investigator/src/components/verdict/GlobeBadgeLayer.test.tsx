@@ -28,13 +28,15 @@ vi.mock("maplibre-gl", () => {
   return { default: { Marker }, Marker };
 });
 
-function fakeMap() {
+/** A stand-in map centred on 60 W, 30 N. `projection` is what it reports as its shape; a case may change it. */
+function fakeMap(projection: { type: string } = { type: "globe" }) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   const map = {
     getCanvasContainer: () => container,
     project: ([lng, lat]: [number, number]) => ({ x: lng * 10, y: -lat * 10 }),
     getCenter: () => ({ lng: -60, lat: 30 }),
+    getProjection: () => projection,
     on: vi.fn(), off: vi.fn(),
   } as unknown as maplibregl.Map;
   return { container, map };
@@ -158,6 +160,45 @@ describe("GlobeBadgeLayer", () => {
     expect(other.style.opacity).toBe("0.45");
   });
 
+});
+
+// On the flat map nothing lies on a far side, so the test for one is skipped. From the stand-in's
+// centre at 60 W, 30 N, a place at 120 E, 30 N lies over the pole, 120 degrees away.
+describe("GlobeBadgeLayer on the flat map", () => {
+  const far = dec("d4", "FAIL", "ATO", "a4", T("09:50"), 30, 120);
+  const handlerFor = (map: maplibregl.Map, type: string) =>
+    (map.on as unknown as ReturnType<typeof vi.fn>).mock.calls.find((c) => c[0] === type)?.[1] as (() => void) | undefined;
+
+  it("draws a capsule 120 degrees from the centre on the flat map and not on the globe", () => {
+    usePivotData.setState({ entities: [far] });
+    const globe = render(<GlobeBadgeLayer map={fm.map} />);
+    expect(capsules(fm.container)).toHaveLength(0);
+    globe.unmount();
+    const flat = fakeMap({ type: "mercator" });
+    render(<GlobeBadgeLayer map={flat.map} />);
+    expect(capsules(flat.container)).toHaveLength(1);
+  });
+
+  it("rebuilds the capsules on the library's projectiontransition alone, with no move", () => {
+    usePivotData.setState({ entities: [far] });
+    const projection = { type: "globe" };
+    const m = fakeMap(projection);
+    render(<GlobeBadgeLayer map={m.map} />);
+    expect(capsules(m.container)).toHaveLength(0);
+    const onFlip = handlerFor(m.map, "projectiontransition");
+    expect(onFlip).toBeTypeOf("function");
+    projection.type = "mercator";
+    act(() => onFlip?.());
+    expect(capsules(m.container)).toHaveLength(1);
+  });
+
+  it("removes its projectiontransition listener on unmount", () => {
+    const m = fakeMap();
+    const { unmount } = render(<GlobeBadgeLayer map={m.map} />);
+    const onFlip = handlerFor(m.map, "projectiontransition");
+    unmount();
+    expect(m.map.off).toHaveBeenCalledWith("projectiontransition", onFlip);
+  });
 });
 
 // The Layers switches (C3 c, C5 b): the data's capsules and flags follow the one function. A switched-off

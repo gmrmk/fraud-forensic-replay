@@ -11,7 +11,9 @@ import { GlobeMap } from "./GlobeMap";
 import { HOME_MOVE } from "../hooks/useBarPadding";
 import globeSource from "./GlobeMap.tsx?raw";
 import { useLayers } from "../store/layers";
+import { useMapMode } from "../store/map-mode";
 import { useSelection } from "../store/selection";
+import { useTheme } from "../store/theme";
 import type { LoginEvent, Transaction } from "../types";
 
 type Pad = { top: number; left: number; right: number; bottom: number };
@@ -27,6 +29,9 @@ interface Fake {
   queryHits: { properties: { id: string } }[];
   getZoom: () => number;
   jumpTo: (o: { center: [number, number]; zoom: number }, eventData?: object) => void;
+  options: { style: { projection?: unknown }; renderWorldCopies?: boolean };
+  shapeCalls: [string, unknown][];
+  styles: { projection?: unknown }[];
 }
 // `link` is the opening link's camera; a case that builds the map at a link's camera fills it.
 const registry = vi.hoisted(() => ({
@@ -49,7 +54,14 @@ vi.mock("maplibre-gl", () => {
     container: HTMLElement;
     canvas: HTMLCanvasElement;
     queryHits: { properties: { id: string } }[] = [];
-    constructor(o: { container: HTMLElement; zoom: number; center: [number, number] }) {
+    // The options the map was built with, the calls about the shape in order, and each style it was given later.
+    options: { container: HTMLElement; zoom: number; center: [number, number]; style: { projection?: unknown } };
+    shapeCalls: [string, unknown][] = [];
+    styles: { projection?: unknown }[] = [];
+    projection: unknown;
+    constructor(o: { container: HTMLElement; zoom: number; center: [number, number]; style: { projection?: unknown } }) {
+      this.options = o;
+      this.projection = o.style?.projection;
       this.zoom = o.zoom;
       [this.lng, this.lat] = o.center;
       this.container = o.container;
@@ -123,10 +135,22 @@ vi.mock("maplibre-gl", () => {
     get transform() {
       return { worldSize: 512 * 2 ** this.zoom, cameraToCenterDistance: 1.5 * 720 };
     }
+    setProjection(p: unknown) {
+      this.projection = p;
+      this.shapeCalls.push(["setProjection", p]);
+    }
+    setRenderWorldCopies(on: unknown) {
+      this.shapeCalls.push(["setRenderWorldCopies", on]);
+    }
+    getProjection() {
+      return this.projection;
+    }
     setLayoutProperty() {}
     setFeatureState() {}
     triggerRepaint() {}
-    setStyle() {}
+    setStyle(style: { projection?: unknown }) {
+      this.styles.push(style);
+    }
     remove() {}
   }
   return { default: { Map: FakeMap } };
@@ -200,6 +224,8 @@ beforeEach(() => {
   delete registry.link.zoom;
   useSelection.getState().clear();
   useLayers.setState({ barSize: "open" });
+  useMapMode.setState({ shape: "globe" });
+  useTheme.setState({ theme: "dark", color: "neon" });
   setStack(null);
 });
 afterEach(() => setStack(null));
@@ -319,6 +345,16 @@ describe("GlobeMap writes the selected record's screen point", () => {
     expect(point(map.container)).toBe("663,350");
   });
 
+  it("writes it again at the library's projectiontransition, since a change of shape moves every point", () => {
+    const { map } = mount({ transactions: [lagos] });
+    act(() => useSelection.getState().selectTransaction(lagos));
+    act(() => map.fire("moveend"));
+    expect(point(map.container)).toBe("663,350");
+    map.container.removeAttribute("data-selected-point");
+    act(() => map.fire("projectiontransition", { type: "projectiontransition", newProjection: "mercator" }));
+    expect(point(map.container)).toBe("663,350");
+  });
+
   it("removes it when the selection clears or the record has no place", () => {
     const { map } = mount({ transactions: [lagos] });
     act(() => useSelection.getState().selectTransaction(lagos));
@@ -343,5 +379,126 @@ describe("GlobeMap mounts the globe's tooltip", () => {
     const [at, lines] = registry.shown.at(-1) as [{ x: number; y: number }, string[]];
     expect(at).toEqual({ x: 15, y: 26 });
     expect(lines.join("\n")).toContain("Shop shop");
+  });
+});
+
+describe("GlobeMap builds the map in the store's shape and applies a change of it", () => {
+  const GLOBE = { type: "globe" };
+  const FLAT = { type: "mercator" };
+  const GOING_FLAT = [
+    ["setRenderWorldCopies", false],
+    ["setProjection", FLAT],
+  ];
+  const GOING_GLOBE = [
+    ["setProjection", GLOBE],
+    ["setRenderWorldCopies", true],
+  ];
+  /** Mounts the component without playing the map's first style load. */
+  const build = () => {
+    const view = render(createElement(GlobeMap, props()));
+    return { map: fakes()[fakes().length - 1], view };
+  };
+
+  it("builds a globe with the world's copies on when the store holds the globe", () => {
+    const { map } = build();
+    expect(map.options.style.projection).toEqual(GLOBE);
+    expect(map.options.renderWorldCopies).toBe(true);
+  });
+
+  it("builds a flat map with the world's copies off when the store holds the flat map", () => {
+    useMapMode.setState({ shape: "flat" });
+    const { map } = build();
+    expect(map.options.style.projection).toEqual(FLAT);
+    expect(map.options.renderWorldCopies).toBe(false);
+  });
+
+  it("builds a second map in the store's shape, as the rebuild after a lost context does", () => {
+    const first = build();
+    expect(first.map.options.renderWorldCopies).toBe(true);
+    first.view.unmount();
+    act(() => useMapMode.setState({ shape: "flat" }));
+    const { map } = build();
+    expect(map).not.toBe(first.map);
+    expect(map.options.style.projection).toEqual(FLAT);
+    expect(map.options.renderWorldCopies).toBe(false);
+  });
+
+  it("applies the store's shape at the first style load", () => {
+    useMapMode.setState({ shape: "flat" });
+    const { map } = mount();
+    expect(map.shapeCalls).toEqual(GOING_FLAT);
+  });
+
+  it("applies the globe at the first style load on the globe", () => {
+    const { map } = mount();
+    expect(map.shapeCalls).toEqual(GOING_GLOBE);
+  });
+
+  it("makes no call for a store change before the first load, and that load applies the store's shape", () => {
+    const { map } = build();
+    act(() => useMapMode.setState({ shape: "flat" }));
+    expect(map.shapeCalls).toEqual([]);
+    act(() => map.fire("style.load"));
+    expect(map.shapeCalls).toEqual(GOING_FLAT);
+  });
+
+  it("applies a change of the store to a loaded map, each way", () => {
+    const { map } = mount();
+    map.shapeCalls.length = 0;
+    act(() => useMapMode.setState({ shape: "flat" }));
+    expect(map.shapeCalls).toEqual(GOING_FLAT);
+    map.shapeCalls.length = 0;
+    act(() => useMapMode.setState({ shape: "globe" }));
+    expect(map.shapeCalls).toEqual(GOING_GLOBE);
+  });
+
+  it("makes no call for a store change between a theme swap's new style and its load, and that load applies it", () => {
+    const { map } = mount();
+    map.shapeCalls.length = 0;
+    act(() => useTheme.setState({ theme: "light" }));
+    expect(map.styles).toHaveLength(1);
+    act(() => useMapMode.setState({ shape: "flat" }));
+    expect(map.shapeCalls).toEqual([]);
+    act(() => map.fire("style.load"));
+    expect(map.shapeCalls).toEqual(GOING_FLAT);
+  });
+
+  it("passes a flat style to a theme swap on the flat map", () => {
+    useMapMode.setState({ shape: "flat" });
+    const { map } = mount();
+    act(() => useTheme.setState({ theme: "light" }));
+    expect(map.styles).toHaveLength(1);
+    expect(map.styles[0].projection).toEqual(FLAT);
+  });
+
+  it("makes no call on the map for a change of the store's shape after the component is unmounted", () => {
+    // Every subscription to the store is ended at unmount: a map that is gone keeps no listener.
+    const subscribe = useMapMode.subscribe;
+    const releases: (() => void)[] = [];
+    const spy = vi.spyOn(useMapMode, "subscribe").mockImplementation((listener) => {
+      const release = vi.fn(subscribe(listener));
+      releases.push(release);
+      return release;
+    });
+    try {
+      const { map, view } = mount();
+      map.shapeCalls.length = 0;
+      expect(releases.length).toBeGreaterThan(0);
+      view.unmount();
+      for (const release of releases) expect(release).toHaveBeenCalled();
+      act(() => useMapMode.setState({ shape: "flat" }));
+      expect(map.shapeCalls).toEqual([]);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("makes no call about the shape for a colour mode change", () => {
+    useMapMode.setState({ shape: "flat" });
+    const { map } = mount();
+    map.shapeCalls.length = 0;
+    act(() => useTheme.setState({ color: "monochrome" }));
+    expect(map.shapeCalls).toEqual([]);
+    expect(map.styles).toEqual([]);
   });
 });

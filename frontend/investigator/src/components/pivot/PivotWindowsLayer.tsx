@@ -12,6 +12,7 @@ import { useStoryInk } from "../../store/kind-ink";
 import { nodeOf } from "../../lib/marks/select";
 import { useMarksStore } from "../../store/marks";
 import { entityLngLat, isOccludedByGlobe } from "../../lib/node-anchor";
+import { mapIsFlat } from "../../lib/globe/projection";
 import { COLLAPSED_BAR_HEIGHT } from "../../lib/window-dims";
 import { takeInitialFocus } from "../../lib/window-focus";
 import { paletteFor } from "../../lib/entity-palette";
@@ -128,7 +129,8 @@ export function PivotWindowsLayer({ map, decisions, context }: Props) {
     if (w.anchor.type !== "node" || !map) return null;
     const p = map.project([w.anchor.lngLat.lng, w.anchor.lngLat.lat]);
     const center = map.getCenter();
-    const occluded = isOccludedByGlobe(
+    // The flat map has no far side, so no window hides there.
+    const occluded = !mapIsFlat(map) && isOccludedByGlobe(
       { lng: center.lng, lat: center.lat },
       w.anchor.lngLat
     );

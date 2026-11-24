@@ -123,9 +123,16 @@ describe("buildShareLink", () => {
   });
 
   it("names no size, fold, depth or setting beside the keys it knows", () => {
-    const qs = buildShareLink({ scenario: "p", playhead: 1, sel: "s", a: 1, b: 2, window: [1, 2], by: "f", solo: "v", theme: "dark", color: "neon" });
+    const qs = buildShareLink({ scenario: "p", playhead: 1, sel: "s", a: 1, b: 2, window: [1, 2], by: "f", solo: "v", theme: "dark", color: "neon", map: "flat" });
     const keys = qs.split("&").map((kv) => kv.split("=")[0]);
-    expect(keys).toEqual(["scenario", "t", "sel", "a", "b", "w0", "w1", "theme", "color", "by", "solo"]);
+    expect(keys).toEqual(["scenario", "t", "sel", "a", "b", "w0", "w1", "theme", "color", "map", "by", "solo"]);
+  });
+
+  it("writes `map` after `color`, and leaves out an absent or empty shape", () => {
+    expect(buildShareLink({ theme: "dark", color: "neon", map: "flat", by: "f" })).toBe("theme=dark&color=neon&map=flat&by=f");
+    expect(buildShareLink({ color: "neon", map: "globe" })).toBe("color=neon&map=globe");
+    expect(buildShareLink({ map: null })).toBe("");
+    expect(buildShareLink({ map: "" })).toBe("");
   });
 
   it("round-trips `by` and `solo`", () => {

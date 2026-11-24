@@ -1,7 +1,7 @@
 /**
  * setupLayers - the globe's `map.on("load")` body, extracted verbatim from
  * GlobeMap.tsx (Task 0, Fraud Manager Console Phase 1). Behaviour-preserving:
- * the globe projection + sky setup, all GeoJSON sources, all circle
+ * the sky setup, all GeoJSON sources, all circle
  * layers (in add order, which is draw order), the marker click binds, and the
  * lifted-3D welded arc custom layer move here unchanged.
  *
@@ -16,6 +16,7 @@
 import type maplibregl from "maplibre-gl";
 import { applyDarkLiberty, applyLightLiberty } from "./darkenLiberty";
 import { basemapStyle } from "./basemap";
+import type { MapMode } from "../../store/map-mode";
 import { attachWorldBase } from "./worldBase";
 import { GLOW_RADIUS_PX } from "../marker-cascade";
 import { createArcLayer } from "../../components/arc-layer-3d";
@@ -51,9 +52,10 @@ import { addTzBandLayers, applyTzHighlight, withTzLabels, TZ_LAYER_IDS } from ".
 // (lib/globe/basemap.ts); vector tiles and the relief raster come from the tile host.
 // Both themes use the same style: dark is Liberty recoloured at run time by
 // applyDarkLiberty. styleFor stays a function so GlobeMap's theme-swap effect still
-// fires; setStyle({diff:false}) forces the reload with the same style.
-export function styleFor(_theme: string): maplibregl.StyleSpecification {
-  return basemapStyle();
+// fires; setStyle({diff:false}) forces the reload with the same style. The style is built
+// for the map's shape, which carries the projection.
+export function styleFor(_theme: string, shape: MapMode): maplibregl.StyleSpecification {
+  return basemapStyle(undefined, shape);
 }
 
 /** The `land` pin-drop term of ml-auths-dot, 1 for a feature with no land state. The dot's radius
@@ -222,8 +224,8 @@ interface SetupLayersDeps {
 }
 
 /**
- * Run the globe's `map.on("load")` body: projection, sky, sources, layers,
- * custom layers, and the marker click + cursor binds.
+ * Run the globe's `map.on("load")` body: sky, sources, layers,
+ * custom layers, and the marker click + cursor binds. The style carries the projection.
  *
  * RETURNS a teardown fn that removes every map-level listener this call
  * registered. It MUST be invoked before re-running setupLayers on a destructive
@@ -261,11 +263,6 @@ export function setupLayers(
   // { unsubscribe } in maplibre 5; collecting them keeps teardown exhaustive
   // even as binds are added.
   const subscriptions: { unsubscribe: () => void }[] = [];
-  // Globe projection must be set on the LOADED style - maplibre-gl@5.24
-  // MapOptions has no `projection` field, so the constructor option is a
-  // silent no-op (see FIX-2026-05-27-maplibre-globe-projection). Everything
-  // we render rides this one globe camera now (deck.gl fully removed in 2c).
-  map.setProjection({ type: "globe" });
   hideBusinessPois(map);
 
   // M2 re-base (2026-06-20): dark loads liberty too, recolored dark at runtime. Run BEFORE the void
@@ -336,7 +333,7 @@ export function setupLayers(
   // World layer (oceans, borders, country names): drawn while tiles load, hidden once a tile arrives.
   const detachWorldBase = attachWorldBase(map);
 
-  // (Dark-style tuning now lives in applyDarkLiberty(), called right after setProjection above so
+  // (Dark-style tuning now lives in applyDarkLiberty(), called near the top of this function so
   //  the void fix captures the dark background. The old OpenFreeMap-`dark` building/road/legibility
   //  block was removed with the M2 re-base onto darkened liberty - 2026-06-20.)
 

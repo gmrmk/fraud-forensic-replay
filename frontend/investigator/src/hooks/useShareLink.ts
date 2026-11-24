@@ -15,7 +15,8 @@
  * the zoom window changes while paused, the selection or the theme changes, a camera
  * move ends, the grouping or the solo changes), never while playing or scrubbing or while the
  * camera is in flight. Writes are coalesced, because browsers limit how often the address bar may
- * be rewritten.
+ * be rewritten. The shape of the map is the one exception: a change of it is written at once, also
+ * while a case plays, and only its own key changes, so a reload cannot undo it.
  *
  * The grouping (`by`) and the solo (`solo`) are untrusted like `sel`: they apply once the manifest
  * declares the field and the loaded rows hold it (and, for the solo, the value). A link that lands
@@ -32,6 +33,7 @@ import { buildShareLink, parseShareLink, type ShareLink, type ShareState } from 
 import { soloHasData } from "../lib/solo";
 import { groupingOf } from "../lib/tracks";
 import { useLayers } from "../store/layers";
+import { useMapMode, type MapMode } from "../store/map-mode";
 import { entityTimestamp } from "../store/navigation";
 import { usePlayhead } from "../store/playhead";
 import { useSchema } from "../store/schema";
@@ -91,10 +93,7 @@ function groupingHeld(
   return seed.some((list) => list.some((r) => holdsValue(r, field))) || (rows.entities ?? []).some((e) => holdsValue(e.fields, field));
 }
 
-function writeAddress(state: ShareState): void {
-  // A note's id never goes into the address (custom notes: no note data in a link).
-  if (state.sel && isNoteId(state.sel)) state = { ...state, sel: null };
-  const qs = buildShareLink(state);
+function replaceAddress(qs: string): void {
   try {
     window.history.replaceState(window.history.state, "", qs ? `?${qs}` : window.location.pathname);
   } catch {
@@ -102,12 +101,41 @@ function writeAddress(state: ShareState): void {
   }
 }
 
+function writeAddress(state: ShareState): void {
+  // A note's id never goes into the address (custom notes: no note data in a link).
+  if (state.sel && isNoteId(state.sel)) state = { ...state, sel: null };
+  replaceAddress(buildShareLink(state));
+}
+
+/** Writes the shape alone into the address as it stands. Every other key keeps its text and its
+ *  place. A `map` key already there is replaced where it is; a new one goes before the grouping
+ *  and the solo, where the full write puts it. */
+function writeMapKey(shape: MapMode): void {
+  const parts = window.location.search.slice(1).split("&").filter((part) => part !== "");
+  const key = (part: string): string => part.split("=")[0];
+  const own = `map=${shape}`;
+  const at = parts.findIndex((part) => key(part) === "map");
+  if (at >= 0) {
+    parts[at] = own;
+  } else {
+    const later = parts.findIndex((part) => key(part) === "by" || key(part) === "solo");
+    parts.splice(later < 0 ? parts.length : later, 0, own);
+  }
+  replaceAddress(parts.join("&"));
+}
+
 /** A scenario pick: take the old pack's scenario, moment, selection, marks, window and camera
- *  out of the address bar (kept, the reload would reopen the pack being left). The theme and
- *  the colour mode stay. `scenario` is given only where the pick could not be stored (a static
- *  build in a browser that blocks site data): the reload's address then carries the pick. */
+ *  out of the address bar (kept, the reload would reopen the pack being left). The theme, the
+ *  colour mode and the shape of the map stay. `scenario` is given only where the pick could not
+ *  be stored (a static build in a browser that blocks site data): the reload's address then
+ *  carries the pick. */
 export function dropShareLink(scenario?: string): void {
-  writeAddress({ scenario, theme: useTheme.getState().theme, color: useTheme.getState().color });
+  writeAddress({
+    scenario,
+    theme: useTheme.getState().theme,
+    color: useTheme.getState().color,
+    map: useMapMode.getState().shape,
+  });
 }
 
 /** The part of a map this hook uses. */
@@ -231,6 +259,7 @@ export function useShareLink({ rows, map, link = openingLink }: Options): void {
           : null,
         theme: useTheme.getState().theme,
         color: useTheme.getState().color,
+        map: useMapMode.getState().shape,
         by,
         solo: solo && grouping !== null && solo.field === grouping ? solo.value : null,
       });
@@ -260,6 +289,10 @@ export function useShareLink({ rows, map, link = openingLink }: Options): void {
     const offSolo = useSolo.subscribe((s, prev) => {
       if (s.solo !== prev.solo) schedule();
     });
+    // At once and also while a case plays, so a reload cannot undo a change of the shape.
+    const offShape = useMapMode.subscribe((s, prev) => {
+      if (s.shape !== prev.shape) writeMapKey(s.shape);
+    });
     map?.on("moveend", schedule);
     // The map arrives after the data and its first move has already ended: write its camera now.
     if (map) schedule();
@@ -269,6 +302,7 @@ export function useShareLink({ rows, map, link = openingLink }: Options): void {
       offTheme();
       offBy();
       offSolo();
+      offShape();
       map?.off("moveend", schedule);
       if (timer !== null) clearTimeout(timer);
     };

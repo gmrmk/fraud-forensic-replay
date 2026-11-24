@@ -33,6 +33,14 @@ describe("basemapStyle", () => {
     }
   });
 
+  it("declares the flat projection for the flat map, and every other field as the globe's style has it", () => {
+    const flat = basemapStyle(BASE, "flat");
+    expect(flat.projection).toEqual({ type: "mercator" });
+    const globe = basemapStyle(BASE, "globe");
+    expect(globe.projection).toEqual({ type: "globe" });
+    expect({ ...flat, projection: undefined }).toEqual({ ...globe, projection: undefined });
+  });
+
   it("returns a fresh object each call", () => {
     const a = basemapStyle(BASE);
     const b = basemapStyle(BASE);

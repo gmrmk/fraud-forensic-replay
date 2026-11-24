@@ -18,7 +18,7 @@ export const EMPTY_VALUE = "-";
 
 /** A manifest kind's switch, and the Authorizations and Logins switches: the row's label, then what the switch does. */
 export function kindSwitchWords(label: string): string[] {
-  return [label, "Shows or hides the records of this kind on the globe and the Timeline."];
+  return [label, "Shows or hides the records of this kind on the map and the Timeline."];
 }
 
 /** One value's switch: the value as the data holds it (a dash for none), then whose records it shows or hides. */

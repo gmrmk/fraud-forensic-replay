@@ -13,7 +13,7 @@ import { useCameraMoves } from "./useCameraMoves";
 import type { CapMove } from "../hooks/useLabelCap";
 import type { Entity } from "../lib/entity";
 import type { EntityMatch } from "../lib/matches";
-import { greatCircleMidpoint } from "../lib/playback-follow";
+import { flatMidpoint, greatCircleMidpoint } from "../lib/playback-follow";
 import type { Path } from "../lib/paths";
 import { pressMove } from "../lib/press-camera";
 import type { ScenarioHome } from "../lib/scenarios";
@@ -48,6 +48,8 @@ function fakeMap() {
     getCanvas: vi.fn(() => ({ clientWidth: 1280, clientHeight: 720 })),
     getPadding: vi.fn(() => ({})),
     triggerRepaint: vi.fn(),
+    // The globe unless a case reports the flat projection.
+    getProjection: vi.fn(() => ({ type: "globe" })),
   };
   return { fake, map: fake as unknown as maplibregl.Map };
 }
@@ -269,6 +271,34 @@ describe("useCameraMoves: the playback follow", () => {
     expect(fake.easeTo.mock.calls[0][0].center).toStrictEqual([LAGOS.lng, LAGOS.lat]);
   });
 
+  it("on the flat map compares the zooms raw and goes to the flat map's midpoint", () => {
+    const { fake, deps } = mount();
+    // The camera at 60 N and the home at 42 N, both at zoom 2: on the globe the camera shows the globe
+    // of zoom 3 at the equator against the home's 2.4283, so it counts as zoomed in; raw they are equal.
+    deps.scenarioHomeRef.current = { lng: -75, lat: 42, zoom: 2 };
+    deps.openedOnWholeGlobeRef.current = true;
+    fake.getCenter.mockReturnValue({ lng: -150, lat: 60 });
+    fake.getZoom.mockReturnValue(2);
+    fake.getProjection.mockReturnValue({ type: "mercator" });
+    // The 60 degree limit is skipped on the flat map, so the target must be off the canvas to be out of view.
+    fake.project.mockReturnValue({ x: -500, y: -500 });
+    act(() => usePlayhead.setState({ isPlaying: true, playhead: 2500 }));
+    act(() => usePlayhead.setState({ playhead: 3500 }));
+    expect(fake.easeTo).toHaveBeenCalledTimes(1);
+    const mid = flatMidpoint(LAGOS, HOUSTON);
+    const [lng, lat] = fake.easeTo.mock.calls[0][0].center as [number, number];
+    expect(lng).toBeCloseTo(mid.lng, 6);
+    expect(lat).toBeCloseTo(mid.lat, 6);
+  });
+
+  it("on the flat map makes no move for a target on the canvas, though it is more than 60 degrees from the centre", () => {
+    const { fake } = mount();
+    fake.getProjection.mockReturnValue({ type: "mercator" });
+    act(() => usePlayhead.setState({ isPlaying: true, playhead: 2500 }));
+    act(() => usePlayhead.setState({ playhead: 3500 }));
+    expect(fake.easeTo).not.toHaveBeenCalled();
+  });
+
   it("reads no clock during a play", () => {
     const { fake } = mount();
     vi.restoreAllMocks(); // takes the constant clock of this block's setup off
@@ -373,6 +403,20 @@ describe("useCameraMoves: a press on a record", () => {
     expect(fake.easeTo).toHaveBeenCalledTimes(2);
     expect(fake.easeTo.mock.calls[1][0]).toStrictEqual({ center: [LAGOS.lng, LAGOS.lat], duration: 900 });
     expect(fake.flyTo).not.toHaveBeenCalled();
+  });
+
+  it("on the flat map a second press on the same record flies in, though the centre is far from it", () => {
+    const { fake } = mount();
+    fake.getProjection.mockReturnValue({ type: "mercator" });
+    placeCamera(fake, HOME_VIEW.lng, HOME_VIEW.lat, 2);
+    act(() => useNavigation.getState().navigate({ kind: "auth", tx: tx("t1", HOUSTON.lat, HOUSTON.lng) }));
+    expect(fake.easeTo).toHaveBeenCalledTimes(1);
+    // The world shown once holds the centre short of Houston, 40 degrees east of it.
+    placeCamera(fake, HOUSTON.lng + 40, HOUSTON.lat, 2);
+    act(() => useNavigation.getState().navigate({ kind: "auth", tx: tx("t1", HOUSTON.lat, HOUSTON.lng) }));
+    expect(fake.easeTo).toHaveBeenCalledTimes(1);
+    expect(fake.flyTo).toHaveBeenCalledTimes(1);
+    expect(fake.flyTo.mock.calls[0][0]).toStrictEqual({ center: [HOUSTON.lng, HOUSTON.lat], zoom: 12, curve: 1.6, speed: 2 });
   });
 
   it("a drag between two presses that leaves the centre 2 degrees from the record makes the second press turn again", () => {

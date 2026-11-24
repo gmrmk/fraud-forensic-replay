@@ -19,6 +19,7 @@ import {
   placeInView,
 } from "../lib/playback-follow";
 import { resetView } from "../hooks/useBarPadding";
+import { mapIsFlat } from "../lib/globe/projection";
 import { pressMove, restsAtPress } from "../lib/press-camera";
 import { prefersReducedMotion } from "../lib/tween";
 import { useNavigation } from "../store/navigation";
@@ -126,15 +127,19 @@ export function useCameraMoves({
       const home = scenarioHomeRef.current;
       // Frame the places and hold: no move for a target in
       // view; one move to the midpoint of the target and the place before it while the camera is at
-      // the zoom the case opened on; to the target when the person has zoomed in. The two zooms are
-      // compared normalised to the equator, so a move across latitudes does not change the rule.
+      // the zoom the case opened on; to the target when the person has zoomed in. On the globe the two
+      // zooms are compared normalised to the equator, so a move across latitudes does not change the
+      // rule; on the flat map the zoom number does not move with latitude, so they are compared raw.
+      const flat = mapIsFlat(map);
+      const zoomAt = (zoom: number, lat: number): number => (flat ? zoom : equatorZoom(zoom, lat));
       const to = followMove({
         target,
         before,
         targetInView: placeInView(map, target),
         atOpeningZoom: openedOnWholeGlobeRef.current
-          && atOpeningZoom(equatorZoom(map.getZoom(), c.lat), home ? equatorZoom(home.zoom, home.lat) : undefined),
+          && atOpeningZoom(zoomAt(map.getZoom(), c.lat), home ? zoomAt(home.zoom, home.lat) : undefined),
         camera: { lng: c.lng, lat: c.lat },
+        flat,
       });
       if (!to) return;
       anchor = cur;
@@ -186,8 +191,9 @@ export function useCameraMoves({
   // 900 ms. With no zoom in the options the library ends it at the start zoom
   // plus the latitude adjustment, so the globe
   // keeps its size on screen. Once the centre is within 0.5 degrees of the record,
-  // a press flies in to the record's zoom; from zoom 11 or more every press flies.
-  // lib/press-camera.ts decides which. The flight's length follows its distance
+  // a press flies in to the record's zoom; from zoom 11 or more every press flies. On the flat map a
+  // second press on the same record flies wherever the centre is. lib/press-camera.ts
+  // decides which. The flight's length follows its distance
   // (`speed` with `curve`, no `duration`): `curve`
   // shapes the zoom-out arc and `speed` 2 runs it quicker than the default 1.2.
   //
@@ -219,7 +225,13 @@ export function useCameraMoves({
     const map = mapRef.current;
     if (!map) return;
     const c = map.getCenter();
-    const move = pressMove({ lng: c.lng, lat: c.lat, zoom: map.getZoom() }, panTarget, pressRef.current.sameRecord);
+    const move = pressMove(
+      { lng: c.lng, lat: c.lat, zoom: map.getZoom() },
+      panTarget,
+      pressRef.current.sameRecord,
+      "place",
+      mapIsFlat(map),
+    );
     if (move === "turn") {
       capMove(() => map.easeTo({ center: [panTarget.lng, panTarget.lat], duration: 900 }),
         { lng: panTarget.lng, lat: panTarget.lat });

@@ -9,6 +9,7 @@
  *   w0, w1              the visible zoom window, Unix ms (both or neither)
  *   lng lat zoom pitch bearing   the camera, as lib/globe/deepLink reads them
  *   theme, color        written through unchanged; their stores read them
+ *   map                 the shape of the map, globe or flat, written through unchanged; store/map-mode reads it
  *   by                  the field the rows are grouped by (a field name; the hook checks the manifest)
  *   solo                the soloed row's value, 1 to 128 characters, no control character
  *
@@ -101,6 +102,8 @@ export interface ShareState {
   camera?: ShareCamera | null;
   theme?: string | null;
   color?: string | null;
+  /** The shape of the map, globe or flat. */
+  map?: string | null;
   /** The grouping in force when it is not the manifest's own. */
   by?: string | null;
   /** The soloed row's value. */
@@ -135,6 +138,7 @@ export function buildShareLink(state: ShareState): string {
   }
   if (state.theme) add("theme", state.theme);
   if (state.color) add("color", state.color);
+  if (state.map) add("map", state.map);
   if (state.by) add("by", state.by);
   if (state.solo) add("solo", state.solo);
   return parts.join("&");

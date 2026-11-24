@@ -52,6 +52,9 @@ Use the card fraud story.
    timeline reads out the time between the two marks. `m` on a mark lifts it.
 4. Open the "Scenario" menu at the top left and pick another story. The address bar changes with
    every step, so you can copy it at any point.
+5. Press the "Flat map" button in the row at the top, just before "Reset view", to show the map
+   flat. The same button, now "Globe", turns it back. The choice is kept for your next visit, and
+   the address bar names it.
 
 ## 5. How to run it
 

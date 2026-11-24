@@ -96,7 +96,7 @@ export const moreStops = (n: number): string => `+${n} more`;
 /** A row's tooltip: what the path is, then where it is drawn (a second line only when it is drawn). */
 export function rowTip(stops: number, drawn: Drawn): string[] {
   const first = `Your path, ${stopsCount(stops)}.`;
-  if (drawn === "globe") return [first, "Drawn on the globe and the Timeline."];
+  if (drawn === "globe") return [first, "Drawn on the map and the Timeline."];
   if (drawn === "timeline") return [first, "Drawn on the Timeline."];
   return [first];
 }

@@ -91,8 +91,8 @@ let showNow: ((el: Element) => void) | null = null;
 
 /** Show an element's tooltip at once, reading its `data-tip` now. The layer reads a trigger's words only
  *  when it shows one and hides on a press, so words changed under a pressed control are not seen until
- *  this is called. Used by the tag menu after a refused press and nowhere else; does nothing while no layer
- *  is mounted. */
+ *  this is called. Used by the Save button of a path's name field when its words change under the pointer,
+ *  and by the map shape button after a press from the keyboard; does nothing while no layer is mounted. */
 // eslint-disable-next-line react-refresh/only-export-components -- calls into the layer below; same reason as `tip`
 export function showTipOn(el: Element): void {
   showNow?.(el);

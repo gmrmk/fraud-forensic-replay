@@ -25,12 +25,13 @@
  * kind's grows with its value), measured against the whole pack as the globe layer does, and not
  * followed through the transient `sel` and `land` factors.
  *
- * Marks are projected and grouped on the camera's last move (`moveend`) and whenever the marks
- * change, as the verdict layer's piles are; a mark on the far side of the globe is left out of every
- * pile and keeps its single form. A pile folds when a camera move the visitor makes ends (the move's
- * event carries `originalEvent`), on a second press and on Escape, and on nothing else: a move the
- * app makes (the playback follow, a flight to a selection) re-projects the marks and leaves an
- * unfolded pile open. Whether a pile is unfolded is this layer's state, never stored. While
+ * Marks are projected and grouped on the camera's last move (`moveend`), on a change of the map's
+ * shape and whenever the marks change, as the verdict layer's piles are; a mark on the far side of
+ * the globe is left out of every pile and keeps its single form. The flat map has no far side. A
+ * pile folds when a camera move the visitor makes ends (the move's event carries `originalEvent`),
+ * on a second press and on Escape, and on nothing else: a move the app makes (the playback follow, a
+ * flight to a selection) and a change of shape re-project the marks and leave an unfolded pile
+ * open. Whether a pile is unfolded is this layer's state, never stored. While
  * a story plays the marks change with the playhead, so a pile can regroup in the middle of a camera
  * move, and an unfolded one then folds with it.
  *
@@ -56,6 +57,7 @@ import { useClockForm } from "../../store/clock-form";
 import { usePivotData } from "../../store/pivot-data";
 import { useSchema } from "../../store/schema";
 import { isOccludedByGlobe } from "../../lib/node-anchor";
+import { mapIsFlat } from "../../lib/globe/projection";
 import { magnitudeMaxima, magnitudeOf } from "../../lib/magnitude";
 import { recordKey } from "../../lib/marks/types";
 import { markName, markTip, pileName, pileTip } from "../../lib/tooltip-words/marks";
@@ -250,23 +252,29 @@ export function GlobeMarks({ map, lookup }: { map: maplibregl.Map | null; lookup
       }
       setCenter({ lng: c.lng, lat: c.lat });
     };
+    // A change of the map's shape re-projects the marks as an app move does, so an unfolded pile stays open.
+    const onShape = (): void => onMoveEnd();
     map.on("moveend", onMoveEnd);
+    map.on("projectiontransition", onShape);
     return () => {
       map.off("moveend", onMoveEnd);
+      map.off("projectiontransition", onShape);
     };
   }, [map, focusPile]);
 
   // Each mark with a place and a level: projected when it is on the near side, grouped by `globeLayout`.
   // A far side mark keeps its single form (the projection of a point behind the globe means nothing).
+  // The flat map has no far side, so every mark is projected there.
   const drawn = useMemo<Drawn>(() => {
     if (!map) return NOTHING;
     const c = center ?? map.getCenter();
+    const flat = mapIsFlat(map);
     const near: Point[] = [];
     const far: Drawn["far"] = [];
     for (const v of views) {
       if (v.globe === "none" || v.lngLat === null) continue;
       const radius = ringRadius(halos.get(v.key) ?? haloRadius(null));
-      if (isOccludedByGlobe({ lng: c.lng, lat: c.lat }, v.lngLat)) {
+      if (!flat && isOccludedByGlobe({ lng: c.lng, lat: c.lat }, v.lngLat)) {
         far.push({ view: v, radius });
         continue;
       }

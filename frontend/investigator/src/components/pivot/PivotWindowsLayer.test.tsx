@@ -45,6 +45,11 @@ function globeMap(center: () => { lng: number; lat: number }, at = { x: 100, y: 
   return { project: () => at, getCenter: center, on: vi.fn(), off: vi.fn() } as unknown as maplibregl.Map;
 }
 
+/** The same stub reporting the flat projection, where no pin lies on a far side. */
+function flatMap(center: () => { lng: number; lat: number }): maplibregl.Map {
+  return Object.assign(globeMap(center), { getProjection: () => ({ type: "mercator" }) });
+}
+
 beforeEach(() => {
   usePivotStore.setState({ windows: [], nextZ: 20 });
   useSelection.setState({ selected: null });
@@ -144,6 +149,18 @@ describe("PivotWindowsLayer - mapping host", () => {
     expect(container.querySelector('[role="dialog"]')).not.toBeNull();
     expect(document.activeElement).toBe(opener);
     opener.remove();
+  });
+
+  it("on the flat map draws a window and its stem whose pin is on the globe's far side from the centre", () => {
+    const far = () => ({ lng: -175, lat: -52 }); // the far side of the globe from Amsterdam
+    usePivotStore.getState().openPopout(signIn, SIGN_IN);
+    const globe = render(<PivotWindowsLayer map={globeMap(far)} decisions={[]} context={emptyContext} />);
+    expect(globe.container.querySelector('[role="dialog"]')).toBeNull();
+    expect(globe.container.querySelector("svg line")).toBeNull();
+    globe.unmount();
+    const { container } = render(<PivotWindowsLayer map={flatMap(far)} decisions={[]} context={emptyContext} />);
+    expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(container.querySelector("svg line")).not.toBeNull();
   });
 
   it("a focused popout whose pin rotates behind the globe hands focus back to its opener", async () => {

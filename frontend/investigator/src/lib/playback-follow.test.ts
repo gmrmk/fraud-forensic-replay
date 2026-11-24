@@ -8,6 +8,7 @@ import {
   atOpeningZoom,
   degDistance,
   equatorZoom,
+  flatMidpoint,
   followMove,
   followPlaceBefore,
   followWaitOver,
@@ -120,6 +121,32 @@ describe("greatCircleMidpoint", () => {
   });
 });
 
+describe("flatMidpoint: the middle of two places on the flat map", () => {
+  it("is 0, 0 for two places set evenly about it", () => {
+    const m = flatMidpoint({ lng: -10, lat: -30 }, { lng: 10, lat: 30 });
+    expect(m.lng).toBeCloseTo(0, 9);
+    expect(m.lat).toBeCloseTo(0, 9);
+  });
+  it("takes the latitude halfway up the flat map: atan(1 / sqrt 2) = 35.2644 N for 0 and 60 N", () => {
+    // Mercator y of 60 N is ln(2 + sqrt 3); the latitude whose tangent is sinh of half of it is atan(1 / sqrt 2).
+    const m = flatMidpoint({ lng: 10, lat: 0 }, { lng: 10, lat: 60 });
+    expect(m.lng).toBeCloseTo(10, 9);
+    expect(m.lat).toBeCloseTo(35.2644, 4);
+  });
+  it("lies between Houston and Lagos on the flat map, not on the great circle", () => {
+    const m = flatMidpoint(HOU, LAG);
+    expect(m.lng).toBeCloseTo((HOU.lng + LAG.lng) / 2, 9);
+    expect(m.lat).toBeGreaterThan(LAG.lat);
+    expect(m.lat).toBeLessThan(HOU.lat);
+    expect(greatCircleDeg(m, greatCircleMidpoint(HOU, LAG))).toBeGreaterThan(HOLD_DEG);
+  });
+  it("does not cross the seam: 170 E and 170 W meet at 0, in the one world", () => {
+    const m = flatMidpoint({ lng: 170, lat: 0 }, { lng: -170, lat: 0 });
+    expect(m.lng).toBeCloseTo(0, 9);
+    expect(m.lat).toBeCloseTo(0, 9);
+  });
+});
+
 describe("followPlaceBefore", () => {
   const ev = (ts: number, p: LngLat): FollowEvent => ({ ts, lng: p.lng, lat: p.lat });
   it("is the latest earlier event at another place", () => {
@@ -224,6 +251,18 @@ describe("followMove", () => {
     expect(to?.lat).toBeCloseTo(0, 6);
   });
 
+  it("takes the flat map's midpoint when flat is set, and the great circle's when it is false or left out", () => {
+    const flat = flatMidpoint(LAG, HOU);
+    const to = followMove({ ...base, flat: true });
+    expect(to?.lng).toBeCloseTo(flat.lng, 9);
+    expect(to?.lat).toBeCloseTo(flat.lat, 9);
+    const globe = greatCircleMidpoint(LAG, HOU);
+    for (const input of [{ ...base, flat: false }, base]) {
+      expect(followMove(input)?.lng).toBeCloseTo(globe.lng, 9);
+      expect(followMove(input)?.lat).toBeCloseTo(globe.lat, 9);
+    }
+  });
+
   it("moves to the target when the person has zoomed in and the target is out of view", () => {
     expect(followMove({ ...base, atOpeningZoom: false })).toEqual(LAG);
   });
@@ -274,15 +313,17 @@ describe("placeInView", () => {
   /** A map of 1280 by 720 with a bar of 173 px under it, as the case view opens. */
   function fakeMap(
     at: { x: number; y: number },
-    over: { occluded?: boolean; padding?: number; w?: number; h?: number; center?: LngLat } = {},
+    over: { occluded?: boolean; padding?: number; w?: number; h?: number; center?: LngLat; flat?: boolean } = {},
   ): FollowViewMap {
-    return {
+    const map: FollowViewMap = {
       project: () => at,
       transform: { isLocationOccluded: () => over.occluded ?? false },
       getCenter: () => over.center ?? HOU, // the view is centred on Houston unless a test says otherwise
       getCanvas: () => ({ clientWidth: over.w ?? 1280, clientHeight: over.h ?? 720 }),
       getPadding: () => ({ top: 0, left: 0, right: 0, bottom: over.padding ?? 173 }),
     };
+    // A stand-in with no read of its projection is a globe; the flat one reports the flat projection.
+    return over.flat ? { ...map, getProjection: () => ({ type: "mercator" }) } : map;
   }
 
   it("is true for a place well inside the part of the map above the bar", () => {
@@ -326,6 +367,13 @@ describe("placeInView", () => {
     const place = { lng: 0, lat: 0 };
     expect(placeInView(fakeMap(onScreen, { center: { lng: 70, lat: 0 } }), place)).toBe(false);
     expect(placeInView(fakeMap(onScreen, { center: { lng: 55, lat: 0 } }), place)).toBe(true);
+  });
+  it("on the flat map holds a place 70 degrees from the centre in view when it is on screen, since the screen decides there", () => {
+    const place = { lng: 0, lat: 0 };
+    const center = { lng: 70, lat: 0 };
+    expect(placeInView(fakeMap({ x: 640, y: 270 }, { center, flat: true }), place)).toBe(true);
+    expect(placeInView(fakeMap({ x: -5, y: 270 }, { center, flat: true }), place)).toBe(false);
+    expect(placeInView(fakeMap({ x: 640, y: 270 }, { center }), place)).toBe(false);
   });
   it("holds a pair less than 120 degrees apart in view from its midpoint, on the angle limit", () => {
     const a = { lng: 0, lat: 0 }, b = { lng: 119, lat: 0 };

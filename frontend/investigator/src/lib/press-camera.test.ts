@@ -35,6 +35,36 @@ describe("pressMove", () => {
     expect(pressMove({ ...LAGOS, zoom: 1.4 }, near, true, "record")).toBe("fly");
   });
 
+  // On the flat map shown once, the library holds a centre-only ease as near to its target as the
+  // world allows, so a record far from the middle of the world never comes to the centre at a low zoom.
+  describe("on the flat map", () => {
+    const HOUSTON = { lng: -95.37, lat: 29.76 };
+    const FAR_CAMERA = { lng: -42, lat: 20, zoom: 2 }; // as far west as the world lets the centre go
+
+    it("flies on a second press on the same record below zoom 11, though the centre is far from it", () => {
+      expect(pressMove(FAR_CAMERA, HOUSTON, true, "place", true)).toBe("fly");
+      expect(pressMove(FAR_CAMERA, HOUSTON, true, "record", true)).toBe("fly");
+    });
+
+    it("turns on a press on another record with the centre far from it", () => {
+      expect(pressMove(FAR_CAMERA, HOUSTON, false, "place", true)).toBe("turn");
+    });
+
+    it("flies with the centre at the record, as on the globe", () => {
+      expect(pressMove({ ...HOUSTON, zoom: 2 }, HOUSTON, false, "place", true)).toBe("fly");
+      expect(pressMove({ ...HOUSTON, zoom: 2 }, HOUSTON, true, "place", true)).toBe("fly");
+    });
+
+    it("flies from zoom 11 whatever the record", () => {
+      expect(pressMove({ ...FAR_CAMERA, zoom: 11 }, HOUSTON, false, "place", true)).toBe("fly");
+    });
+
+    it("answers as on the globe when flat is false", () => {
+      expect(pressMove(FAR_CAMERA, HOUSTON, true, "place", false)).toBe("turn");
+      expect(pressMove(FAR_CAMERA, HOUSTON, true)).toBe("turn");
+    });
+  });
+
   it("holds the numbers the page of clips showed", () => {
     expect(TURN_BELOW_ZOOM).toBe(11);
     expect(AT_RECORD_DEG).toBe(0.5);

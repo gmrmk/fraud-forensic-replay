@@ -4,8 +4,9 @@
  * decision at its place and, for the selected record, every decision carried by a record sharing
  * one of its values, lit at that record. Each event a reached rule decision queued flies a flag at
  * the event until a reached decision works it. Badges on one spot merge into a pile. Piles
- * recompute on moveend, not per frame. The Layers switches act here: a switched-off kind or value
- * draws no capsule and no flag. A solo draws only the capsules of decisions it holds (`decisionInSolo`).
+ * recompute on moveend and on a change of the map's shape, not per frame. The Layers switches act
+ * here: a switched-off kind or value draws no capsule and no flag. A solo draws only the capsules of
+ * decisions it holds (`decisionInSolo`).
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type maplibregl from "maplibre-gl";
@@ -20,6 +21,7 @@ import { overlaysOf } from "../../lib/verdicts";
 import { useSoloIds } from "../../hooks/useSoloIds";
 import { pileItems, type Pile } from "../../lib/verdict-piles";
 import { isOccludedByGlobe } from "../../lib/node-anchor";
+import { mapIsFlat } from "../../lib/globe/projection";
 import { useDecisionData } from "../../store/decision-data";
 import { useShowInputs } from "../../store/marks";
 import { useSchema } from "../../store/schema";
@@ -39,6 +41,7 @@ export function GlobeBadgeLayer({ map }: { map: maplibregl.Map | null }) {
   // The camera centre after the last move: a new value re-projects the piles.
   const [center, setCenter] = useState<{ lng: number; lat: number } | null>(null);
 
+  // A change of shape moves no camera, so the library's projectiontransition re-projects the piles too.
   useEffect(() => {
     if (!map) return;
     const onMoveEnd = () => {
@@ -46,7 +49,11 @@ export function GlobeBadgeLayer({ map }: { map: maplibregl.Map | null }) {
       setCenter({ lng: c.lng, lat: c.lat });
     };
     map.on("moveend", onMoveEnd);
-    return () => { map.off("moveend", onMoveEnd); };
+    map.on("projectiontransition", onMoveEnd);
+    return () => {
+      map.off("moveend", onMoveEnd);
+      map.off("projectiontransition", onMoveEnd);
+    };
   }, [map]);
 
   // The Layers switches act here: a switched-off kind or value draws no capsule, and no flag flies at an
@@ -74,8 +81,10 @@ export function GlobeBadgeLayer({ map }: { map: maplibregl.Map | null }) {
   const piles = useMemo(() => {
     if (!map) return [];
     const c = center ?? map.getCenter();
+    // The flat map has no far side, so no capsule is hidden there.
+    const flat = mapIsFlat(map);
     const items = sources
-      .filter((s) => !isOccludedByGlobe({ lng: c.lng, lat: c.lat }, s.lngLat))
+      .filter((s) => flat || !isOccludedByGlobe({ lng: c.lng, lat: c.lat }, s.lngLat))
       .map((s) => {
         const p = map.project([s.lngLat.lng, s.lngLat.lat]);
         return { ...s, x: p.x, y: p.y };

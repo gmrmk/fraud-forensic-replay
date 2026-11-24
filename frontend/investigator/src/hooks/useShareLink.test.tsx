@@ -16,6 +16,7 @@ import { useTheme } from "../store/theme";
 import { useLayers } from "../store/layers";
 import { useSolo } from "../store/solo";
 import { useTrackBy } from "../store/track-by";
+import { MAP_KEY, useMapMode } from "../store/map-mode";
 import { BAR_SIZE_KEY } from "../lib/bar-size";
 import { manifestRowToEntity } from "../lib/adapters/manifest-row";
 import type { BootFocusRows } from "../lib/boot-focus";
@@ -77,6 +78,7 @@ beforeEach(() => {
   useLayers.setState({ barSize: "middle" });
   useTrackBy.setState({ by: null });
   useSolo.setState({ solo: null });
+  useMapMode.setState({ shape: "globe" });
 });
 afterEach(() => {
   vi.restoreAllMocks();
@@ -310,7 +312,7 @@ describe("the address bar and the grouping and the solo", () => {
     act(() => usePlayhead.getState().setPlayhead(T0 + HOUR));
     settle();
     const keys = [...new URLSearchParams(String(address())).keys()].sort();
-    expect(keys).toEqual(["by", "color", "scenario", "solo", "t", "theme"]);
+    expect(keys).toEqual(["by", "color", "map", "scenario", "solo", "t", "theme"]);
     expect(address()).not.toMatch(/size|fold|depth|collapsed|lane/i);
   });
 });
@@ -442,11 +444,77 @@ describe("the address bar", () => {
   });
 });
 
+describe("the address bar and the shape of the map", () => {
+  const settle = () => act(() => void vi.advanceTimersByTime(400));
+  afterEach(() => {
+    window.location.href = "http://localhost/";
+  });
+
+  // The test DOM ignores history.replaceState, so an address is seeded through location.
+  it("writes a change of the shape at once while paused, replacing the key where it stands", () => {
+    act(() => usePlayhead.getState().setBounds(T0, T0 + 24 * HOUR));
+    window.location.search = "?scenario=pack-x&t=5&theme=dark&color=neon&map=globe&by=org_id";
+    render(<Probe link={{}} rows={rows} />);
+    act(() => useMapMode.getState().setShape("flat"));
+    expect(address()).toBe("?scenario=pack-x&t=5&theme=dark&color=neon&map=flat&by=org_id");
+  });
+
+  it("writes only the shape at once while a case plays, and nothing else while it plays", () => {
+    act(() => usePlayhead.getState().setBounds(T0, T0 + 24 * HOUR));
+    window.location.search = "?scenario=pack-x&t=5&theme=dark&color=neon";
+    render(<Probe link={{}} rows={rows} />);
+    act(() => usePlayhead.setState({ isPlaying: true }));
+    act(() => {
+      usePlayhead.getState().setPlayhead(T0 + 3 * HOUR);
+      useMapMode.getState().setShape("flat");
+    });
+    expect(replace()).toHaveBeenCalledTimes(1);
+    expect(address()).toBe("?scenario=pack-x&t=5&theme=dark&color=neon&map=flat");
+    settle();
+    expect(replace()).toHaveBeenCalledTimes(1);
+  });
+
+  it("names the shape in every full write, after the colour", () => {
+    act(() => usePlayhead.getState().setBounds(T0, T0 + 24 * HOUR));
+    render(<Probe link={{}} rows={rows} />);
+    act(() => usePlayhead.getState().setPlayhead(T0 + 2 * HOUR));
+    settle();
+    expect(address()).toMatch(/&theme=dark&color=neon&map=globe$/);
+    act(() => useMapMode.setState({ shape: "flat" }));
+    act(() => usePlayhead.getState().setPlayhead(T0 + 3 * HOUR));
+    settle();
+    expect(address()).toMatch(/&theme=dark&color=neon&map=flat$/);
+  });
+
+  it("puts a new key before the grouping and the solo, where the full write puts it", () => {
+    act(() => usePlayhead.getState().setBounds(T0, T0 + 24 * HOUR));
+    window.location.search = "?scenario=pack-x&theme=dark&color=neon&by=org_id&solo=acme";
+    render(<Probe link={{}} rows={rows} />);
+    act(() => useMapMode.getState().setShape("flat"));
+    expect(address()).toBe("?scenario=pack-x&theme=dark&color=neon&map=flat&by=org_id&solo=acme");
+  });
+
+  it("a page opened on a link's shape writes that shape and leaves the stored choice as it was", () => {
+    // The store has read a link's flat shape; the remembered choice is the globe.
+    localStorage.setItem(MAP_KEY, "globe");
+    useMapMode.setState({ shape: "flat" });
+    act(() => usePlayhead.getState().setBounds(T0, T0 + 24 * HOUR));
+    render(<Probe link={{}} rows={rows} />);
+    act(() => usePlayhead.getState().setPlayhead(T0 + 2 * HOUR));
+    settle();
+    expect(address()).toContain("map=flat");
+    expect(localStorage.getItem(MAP_KEY)).toBe("globe");
+  });
+});
+
 describe("a scenario pick", () => {
-  it("dropShareLink leaves the theme and colour and nothing of the old scenario", () => {
+  it("dropShareLink leaves the theme, the colour and the shape, and nothing of the old scenario", () => {
     useTheme.setState({ theme: "light", color: "neon" });
     dropShareLink();
-    expect(address()).toBe("?theme=light&color=neon");
+    expect(address()).toBe("?theme=light&color=neon&map=globe");
+    useMapMode.setState({ shape: "flat" });
+    dropShareLink();
+    expect(address()).toBe("?theme=light&color=neon&map=flat");
   });
 });
 

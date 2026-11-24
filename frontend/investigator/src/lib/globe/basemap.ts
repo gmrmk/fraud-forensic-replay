@@ -4,6 +4,8 @@
  * A glyph range that is not bundled is routed to the tile host by `routeBasemapRequest`.
  */
 import type { StyleSpecification } from "maplibre-gl";
+import type { MapMode } from "../../store/map-mode";
+import { projectionFor } from "./projection";
 import libertyText from "./basemap/liberty.json?raw";
 
 export const BUNDLED_FONTS = ["Noto Sans Regular", "Noto Sans Bold", "Noto Sans Italic"];
@@ -18,14 +20,14 @@ export function siteBase(
   return new URL(appBase, documentBase).href;
 }
 
-/** The bundled style with sprite and glyphs under `base` and the globe projection. A new
+/** The bundled style with sprite and glyphs under `base` and the projection of `shape`. A new
  *  object on every call. Glyphs are joined as strings: a URL constructor would escape the
  *  braces of the `{fontstack}` and `{range}` tokens. */
-export function basemapStyle(base: string = siteBase()): StyleSpecification {
+export function basemapStyle(base: string = siteBase(), shape: MapMode = "globe"): StyleSpecification {
   const style = JSON.parse(libertyText) as StyleSpecification;
   style.sprite = `${base}basemap/sprites/ofm`;
   style.glyphs = `${base}basemap/fonts/{fontstack}/{range}.pbf`;
-  style.projection = { type: "globe" };
+  style.projection = projectionFor(shape);
   return style;
 }
 

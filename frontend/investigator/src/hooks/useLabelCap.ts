@@ -7,21 +7,30 @@
  * a drag, the wheel, the keyboard, a jump). It is set again when the style loads: a theme switch
  * replaces the style (setStyle with diff false), which restores the shipped filters.
  *
+ * On the flat map no name runs off a sphere, so no cap is set there and every layer keeps its shipped
+ * filter. The map is asked its shape at each setting, and the library's `projectiontransition` sets
+ * the filters again when the shape changes.
+ *
  * The shipped filters are read once, from the style document, never back from the live map: a
  * filter read from the map could already hold a cap and would nest a second one. Listeners are
- * `style.load` and `moveend` only, so nothing runs per frame, and no clock is read.
+ * `style.load`, `moveend` and `projectiontransition` only, so nothing runs per frame, and no clock
+ * is read.
  */
 import { useCallback, useEffect, useRef } from "react";
-import type { StyleSpecification } from "maplibre-gl";
+import type { ProjectionSpecification, StyleSpecification } from "maplibre-gl";
 import { basemapStyle } from "../lib/globe/basemap";
 import {
   CAP_SET_OPTIONS,
+  LABEL_CAP_ZOOM,
   capFilter,
   capStateChanged,
   labelCapLayers,
   moveCapZoom,
   type CapState,
 } from "../lib/globe/labelCap";
+import { mapIsFlat } from "../lib/globe/projection";
+
+type LabelCapEvent = "style.load" | "moveend" | "projectiontransition";
 
 /** The calls the hook makes on the map (a MapLibre `Map` satisfies it; a test passes a fake). */
 export type LabelCapMap = {
@@ -30,8 +39,9 @@ export type LabelCapMap = {
   isMoving(): boolean;
   getLayer(id: string): unknown;
   setFilter(id: string, filter: never, options?: { validate?: boolean }): unknown;
-  on(type: "style.load" | "moveend", listener: () => void): unknown;
-  off(type: "style.load" | "moveend", listener: () => void): unknown;
+  on(type: LabelCapEvent, listener: () => void): unknown;
+  off(type: LabelCapEvent, listener: () => void): unknown;
+  getProjection?(): ProjectionSpecification;
 };
 
 /** Where a move is going: its centre, and the zoom the call names when it names one. */
@@ -45,17 +55,26 @@ export type LabelCapInstall = { dispose: () => void; capMove: CapMove };
 
 type Pending = { lng: number; lat: number; namedZoom: number | undefined };
 
-/** Sets the cap now, at every `style.load` and `moveend`, and through the returned `capMove`;
- *  `dispose` removes the listeners. `style` is the document the map's style was loaded from. */
+/** Sets the cap now, at every `style.load`, `moveend` and `projectiontransition`, and through the
+ *  returned `capMove`; `dispose` removes the listeners. `style` is the document the map's style was
+ *  loaded from. */
 export function installLabelCap(map: LabelCapMap, style: StyleSpecification): LabelCapInstall {
   const layers = labelCapLayers(style);
   let last: CapState | null = null; // what the layers hold now; null is unknown
   let pending: Pending | null = null; // the target of a move `capMove` began and that has not ended
   let depth = 0; // open `capMove` calls: a count, not a timer
 
+  // Every state the filters are set for is made here. On the flat map it takes the zoom at which the
+  // cap is off, so `capFilter` gives each layer its shipped filter and a flip sets the filters again.
+  const capState = (lng: number, lat: number, zoom: number): CapState => ({
+    lng,
+    lat,
+    zoom: mapIsFlat(map) ? Math.max(zoom, LABEL_CAP_ZOOM) : zoom,
+  });
+
   const fromCamera = (): CapState => {
     const c = map.getCenter();
-    return { lng: c.lng, lat: c.lat, zoom: map.getZoom() };
+    return capState(c.lng, c.lat, map.getZoom());
   };
 
   const settle = (next: CapState): void => {
@@ -76,18 +95,23 @@ export function installLabelCap(map: LabelCapMap, style: StyleSpecification): La
     settle(fromCamera());
   };
 
-  const onStyleLoad = (): void => {
-    last = null; // the new style holds the shipped filters
+  // Round the target of a move under way, or round the camera.
+  const resettle = (): void => {
     if (pending) {
-      settle({ lng: pending.lng, lat: pending.lat, zoom: moveCapZoom(map.getZoom(), pending.namedZoom) });
+      settle(capState(pending.lng, pending.lat, moveCapZoom(map.getZoom(), pending.namedZoom)));
     } else {
       settle(fromCamera());
     }
   };
 
+  const onStyleLoad = (): void => {
+    last = null; // the new style holds the shipped filters
+    resettle();
+  };
+
   const capMove: CapMove = (run, to) => {
     if (!to) return run();
-    const next: CapState = { lng: to.lng, lat: to.lat, zoom: moveCapZoom(map.getZoom(), to.zoom) };
+    const next = capState(to.lng, to.lat, moveCapZoom(map.getZoom(), to.zoom));
     depth++;
     let out: ReturnType<typeof run>;
     try {
@@ -108,11 +132,13 @@ export function installLabelCap(map: LabelCapMap, style: StyleSpecification): La
 
   map.on("style.load", onStyleLoad);
   map.on("moveend", onMoveEnd);
+  map.on("projectiontransition", resettle);
   settle(fromCamera());
   return {
     dispose: () => {
       map.off("style.load", onStyleLoad);
       map.off("moveend", onMoveEnd);
+      map.off("projectiontransition", resettle);
     },
     capMove,
   };

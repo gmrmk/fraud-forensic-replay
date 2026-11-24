@@ -159,9 +159,13 @@ describe("the words of the investigator's paths", () => {
   });
 
   it("the row's tooltip names the stops, then where the path is drawn", () => {
-    expect(rowTip(4, "globe")).toEqual(["Your path, 4 stops.", "Drawn on the globe and the Timeline."]);
+    expect(rowTip(4, "globe")).toEqual(["Your path, 4 stops.", "Drawn on the map and the Timeline."]);
     expect(rowTip(4, "timeline")).toEqual(["Your path, 4 stops.", "Drawn on the Timeline."]);
     expect(rowTip(4, null)).toEqual(["Your path, 4 stops."]);
+  });
+
+  it("calls the map the map on either shape: no string, fixed or built, holds the word globe", () => {
+    for (const s of [...fixed(), ...built()]) expect(s, s).not.toMatch(/globe/i);
   });
 
   it("the line's tooltip reads two lines", () => {

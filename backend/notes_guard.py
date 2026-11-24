@@ -46,8 +46,8 @@ WHY IT WAS NARROWED. The earlier strict rule refused a run when ANY span of
 whole groups of 13 to 19 digits passed Luhn, and when a group over 19 digits held such a number at
 its first or its last digit. Over 234,000 generated lines of 26 kinds of the things a person types
 in a note it newly refused 31,544 honest notes of bare numbers set side by side (a phone number
-then a date, a date range and a count, two Unix times, a string of 20 or more digits...). The rule was
-narrowed, accepting that some card lines with an expiry beside them can pass again.
+then a date, a date range and a count, two Unix times, a string of 20 or more digits...). The rule
+was narrowed, accepting that some card lines with an expiry beside them can pass again.
 The narrowed rule newly refused 256 of those lines (0.11 percent).
 
 WHY THE LAYOUT TEST WIDENED. A skeptic found that a card number with ONE slip in its spacing and

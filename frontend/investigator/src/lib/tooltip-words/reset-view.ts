@@ -12,5 +12,5 @@
 
 export const resetViewWords = (): string[] => [
   "Reset view",
-  "Press to move the globe back to the opening view of this case.",
+  "Press to move the map back to the opening view of this case.",
 ];

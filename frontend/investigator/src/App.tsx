@@ -37,6 +37,7 @@ import type { Entity } from "./lib/entity";
 import { buildTickerStream, type TickerItem } from "./lib/ticker-stream";
 import type { PivotContext } from "./lib/matches";
 import type { ScenarioAnnotation, ScenarioHome } from "./lib/scenarios";
+import { MapModeButton } from "./components/MapModeButton";
 import { ResetViewButton } from "./components/ResetViewButton";
 import { ThemeSwitcher } from "./components/ThemeSwitcher";
 import { shouldSkipUnscopedCaseBundle } from "./lib/population-fetch";
@@ -576,9 +577,9 @@ export default function App() {
         </div>
       </Panel>
 
-      {/* The menu group: the Layers and Paths menus, the Notes menu, then the reset button and the
-          visual-settings gear, on one flex row, the second column of the top row. The map controls
-          sit in the bar, so nothing of theirs sits under the Inspector. */}
+      {/* The menu group: the Layers and Paths menus, the Notes menu, then the map shape button, the
+          reset button and the visual-settings gear, on one flex row, the second column of the top
+          row. The map controls sit in the bar, so nothing of theirs sits under the Inspector. */}
       <div className="top-row-menu relative col-start-2 row-start-1 z-40 flex items-stretch gap-2 pointer-events-auto">
         <MapMenus
           transactions={transactions} logins={logins} places={places} transfers={transfers}
@@ -586,6 +587,7 @@ export default function App() {
           loadError={loadError} genericByKind={genericByKind}
         />
         <NotesMenu lookup={noteLookup} />
+        <MapModeButton />
         <ResetViewButton map={mapInstance} home={scenarioHome} />
         <ThemeSwitcher />
       </div>

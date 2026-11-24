@@ -63,7 +63,8 @@ vi.mock("maplibre-gl", () => {
   return { default: { Marker }, Marker };
 });
 
-function fakeMap() {
+/** `projection` is what the stand-in reports as its shape; a case may change it. */
+function fakeMap(projection: { type: string } = { type: "globe" }) {
   const container = document.createElement("div");
   document.body.appendChild(container);
   return {
@@ -72,6 +73,7 @@ function fakeMap() {
     off: vi.fn(),
     project: vi.fn(([lng, lat]: [number, number]) => ({ x: lng * 100, y: -lat * 100 })),
     getCenter: () => ({ lng: -95, lat: 30 }),
+    getProjection: () => projection,
   } as unknown as maplibregl.Map;
 }
 
@@ -510,6 +512,53 @@ describe("marks on one place", () => {
     expect(plates()).toHaveLength(1);
     expect(plates()[0].lngLat).toEqual([far.lng, far.lat]);
     expect(rings()).toHaveLength(2);
+  });
+
+  // The flat map has no far side: the same three marks, on a stand-in that reports the flat projection.
+  const FAR_THREE: Spec[] = [
+    { id: "n1", dx: 0, dy: 0, at: -30, node: { disposition: "pass" } },
+    { id: "n2", dx: 0, dy: 0, at: -20, node: { disposition: "fail" } },
+    { id: "f1", dx: 0, dy: 0, at: -10, at0: { lng: 85, lat: 30 }, node: { disposition: "wait" } },
+  ];
+  /** Runs every listener the layer put on the stand-in for `type`, with the event data the library gives it. */
+  const fireOn = (map: maplibregl.Map, type: string) =>
+    act(() => {
+      for (const c of lensWith(map).on.mock.calls) if (c[0] === type) (c[1] as (e: object) => void)({ type, newProjection: "mercator" });
+    });
+
+  it("on the flat map a mark 120 degrees from the centre, over the pole, joins the pile in the near form", () => {
+    const l = setup(FAR_THREE);
+    const map = fakeMap({ type: "mercator" });
+    lensWith(map).project.mockImplementation(() => ({ x: 10, y: 10 }));
+    render(<GlobeMarks map={map} lookup={l} />);
+    expect(piles()).toHaveLength(1);
+    expect(pileBtn().querySelector('[data-part="pile"]')?.textContent).toBe(`${TIMES}3`);
+    expect(plates()).toHaveLength(0);
+  });
+
+  it("the library's projectiontransition alone moves a far mark to its near form after a flip", () => {
+    const l = setup(FAR_THREE);
+    const projection = { type: "globe" };
+    const map = fakeMap(projection);
+    lensWith(map).project.mockImplementation(() => ({ x: 10, y: 10 }));
+    render(<GlobeMarks map={map} lookup={l} />);
+    expect(plates()).toHaveLength(1);
+    projection.type = "mercator";
+    fireOn(map, "projectiontransition");
+    expect(pileBtn().querySelector('[data-part="pile"]')?.textContent).toBe(`${TIMES}3`);
+    expect(plates()).toHaveLength(0);
+  });
+
+  it("the library's projectiontransition leaves an unfolded pile open", () => {
+    const l = setup(HOUSTON_FIVE);
+    const projection = { type: "globe" };
+    const map = fakeMap(projection);
+    render(<GlobeMarks map={map} lookup={l} />);
+    fireEvent.click(pileBtn());
+    projection.type = "mercator";
+    fireOn(map, "projectiontransition");
+    expect(pileBtn().getAttribute("aria-expanded")).toBe("true");
+    expect(columnOf()).toHaveLength(5);
   });
 
   it("a single mark draws today's ring with its handle and its plate", () => {

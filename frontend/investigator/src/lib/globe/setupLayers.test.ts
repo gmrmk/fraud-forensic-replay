@@ -36,11 +36,19 @@ const place = (id: string, lng: number, lat: number): Place =>
   ({ id, lng, lat }) as Place;
 
 describe("styleFor (the site's own basemap style)", () => {
-  it.each(["light", "dark", "anything-else"])("%s -> the bundled basemap style", (theme) => {
-    expect(styleFor(theme)).toEqual(basemapStyle());
-  });
-  it("returns a fresh object on every call", () => {
-    expect(styleFor("dark")).not.toBe(styleFor("dark"));
+  const shapes = [
+    ["globe", { type: "globe" }],
+    ["flat", { type: "mercator" }],
+  ] as const;
+  describe.each(shapes)("for the %s", (shape, projection) => {
+    it.each(["light", "dark", "anything-else"])("%s -> the bundled basemap style built for the shape", (theme) => {
+      const style = styleFor(theme, shape);
+      expect(style).toEqual(basemapStyle(undefined, shape));
+      expect(style.projection).toEqual(projection);
+    });
+    it("returns a fresh object on every call", () => {
+      expect(styleFor("dark", shape)).not.toBe(styleFor("dark", shape));
+    });
   });
 });
 
@@ -237,6 +245,12 @@ describe("setupLayers timezone layer stack", () => {
     markerHandlersRef: { current: null },
     pathsRef: { current: [] },
   } as unknown as Parameters<typeof setupLayers>[1];
+
+  it("never sets the projection: the style carries it, and one module applies the shape", () => {
+    const { map } = orderedMap();
+    setupLayers(map, deps, resolvePalette("dark", "neon"));
+    expect(map.setProjection).not.toHaveBeenCalled();
+  });
 
   it("adds no cluster source or layer", () => {
     const { map } = orderedMap();

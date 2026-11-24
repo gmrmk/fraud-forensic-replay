@@ -16,8 +16,12 @@ describe("the reset button's sentences", () => {
   it("name the button, then say what a press does", () => {
     expect(resetViewWords()).toEqual([
       "Reset view",
-      "Press to move the globe back to the opening view of this case.",
+      "Press to move the map back to the opening view of this case.",
     ]);
+  });
+
+  it("call the map the map on either shape: no line holds the word globe", () => {
+    for (const line of resetViewWords()) expect(line).not.toMatch(/globe/i);
   });
 
   it("title matches the button's accessible name", () => {

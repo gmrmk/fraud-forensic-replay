@@ -22,6 +22,7 @@
 import { chromium } from 'playwright';
 import { BAR_SIZES, MARK_RULES, expectedBar, barHeights, expectedLanes, expectedPlace, findPlace, inapplicableLegs, kindsToFetch, laneProblems, laneVerdict, markDue, markNote, passNote, placeNote, placeProblems, readDecided, stepKey, summaryLine, waitLine } from './lane-check.mjs';
 import { BAR, FOLD_BUTTON, ROW_SELECTOR, SLIDER, readBar, readControls, readDepth, readFold, readHeights, readLane, readPlace, readSmalls, stackFact, trackNodeSelector } from './bar-read.mjs';
+import { crawlShapes } from './shape-check.mjs';
 
 const BASE = process.argv[2];
 if (!BASE || !BASE.endsWith('/')) {
@@ -231,7 +232,7 @@ async function crawlSwitch(browser, scenarios) {
 const linkOf = (url) => {
   const q = new URL(url).searchParams;
   const num = (k) => (q.get(k) === null ? null : Number(q.get(k)));
-  return { scenario: q.get('scenario'), sel: q.get('sel'), t: num('t'), a: num('a'), b: num('b'), lng: num('lng'), lat: num('lat'), zoom: num('zoom') };
+  return { scenario: q.get('scenario'), sel: q.get('sel'), t: num('t'), a: num('a'), b: num('b'), lng: num('lng'), lat: num('lat'), zoom: num('zoom'), map: q.get('map') };
 };
 
 async function crawlShareLink(browser, scenarios, defaultId) {
@@ -774,6 +775,7 @@ try {
   }
   await crawlSwitch(browser, scenarios);
   await crawlShareLink(browser, scenarios, index.default);
+  await crawlShapes(browser, scenarios, { BASE, READY_MS, SLIDER, fail, section, watch, ready, linkOf, waitingLegs });
   await crawlLanes(browser, scenarios);
   await crawlCustomerAlone(browser);
   await crawlCustomerFollows(browser);

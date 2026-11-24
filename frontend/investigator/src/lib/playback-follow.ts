@@ -11,6 +11,9 @@
  * (consecutive events <1° apart) but swings to Lagos on the impossible leap
  * (~100° apart) - it follows the *story*, not every blip.
  */
+import type { ProjectionSpecification } from "maplibre-gl";
+import { mapIsFlat } from "./globe/projection";
+
 export interface FollowEvent {
   ts: number;
   lng: number;
@@ -97,6 +100,15 @@ export function greatCircleMidpoint(a: LngLat, b: LngLat): LngLat {
   return { lng: deg(Math.atan2(x, z)), lat: deg(Math.asin(y / n)) };
 }
 
+/** The point midway between two places on the flat map: the mean of their longitudes, in the one
+ *  world shown, with no wrap across the 180 line, and the latitude whose Mercator y is the mean of
+ *  the two places' Mercator y. */
+export function flatMidpoint(a: LngLat, b: LngLat): LngLat {
+  const mercatorY = (lat: number): number => Math.log(Math.tan(Math.PI / 4 + rad(lat) / 2));
+  const y = (mercatorY(a.lat) + mercatorY(b.lat)) / 2;
+  return { lng: (a.lng + b.lng) / 2, lat: deg(2 * Math.atan(Math.exp(y)) - Math.PI / 2) };
+}
+
 /** The place the story was at before `target`: the latest event earlier than it and not at its own
  *  place (more than `HOLD_DEG` away). So two Lagos events in a row both look back to Houston. Null
  *  when the story has been nowhere else. Input order-independent. */
@@ -147,6 +159,8 @@ export interface FollowMoveInput {
   atOpeningZoom: boolean;
   /** Where the camera is. */
   camera: LngLat;
+  /** Whether the map is flat; left out, it is the globe. */
+  flat?: boolean;
 }
 
 /** The centre of the one move the follow makes, or null for no move. (a) A target in view: none.
@@ -154,12 +168,13 @@ export interface FollowMoveInput {
  *  they are less than `FAR_PAIR_DEG` apart, else the target. (c) Out of view with the person
  *  zoomed in: the target. (f) A move whose centre is within `HOLD_DEG` of the camera is none, so
  *  two places near the edge of the view, each judged out of view from their own midpoint, do not
- *  ask for the same centre again and again. */
+ *  ask for the same centre again and again. The midpoint is the great circle's on the globe and
+ *  `flatMidpoint` on the flat map. */
 export function followMove(input: FollowMoveInput): LngLat | null {
   if (input.targetInView) return null;
   let to: LngLat = { lng: input.target.lng, lat: input.target.lat };
   if (input.atOpeningZoom && input.before && greatCircleDeg(input.target, input.before) < FAR_PAIR_DEG) {
-    to = greatCircleMidpoint(input.target, input.before);
+    to = (input.flat ? flatMidpoint : greatCircleMidpoint)(input.target, input.before);
   }
   return greatCircleDeg(to, input.camera) <= HOLD_DEG ? null : to;
 }
@@ -168,7 +183,8 @@ export function followMove(input: FollowMoveInput): LngLat | null {
  *  maplibre-gl 5.24.1: `Map.project` is `transform.locationToScreenPoint` (a pixel in the container);
  *  `transform.isLocationOccluded` is the globe's horizon test, true for a
  *  place on the far side (the call a Marker makes) and false under Mercator;
- *  `Map.getPadding` is the transform's padding, whose bottom is the bar's height. */
+ *  `Map.getPadding` is the transform's padding, whose bottom is the bar's height;
+ *  `Map.getProjection` tells the flat map from the globe. */
 export interface FollowViewMap {
   project(lngLat: LngLat): { x: number; y: number };
   transform: { isLocationOccluded(lngLat: LngLat): boolean };
@@ -176,20 +192,22 @@ export interface FollowViewMap {
   getCenter(): LngLat;
   /** MapLibre's `PaddingOptions`: a side it does not name is 0. */
   getPadding(): { top?: number; bottom?: number; left?: number; right?: number };
+  getProjection?(): ProjectionSpecification;
 }
 
 /** A place farther than this from the centre of the view is not in view, though it is on the near
  *  side: at the whole-globe view the disk lies inside the canvas, so the screen margin never bites
  *  east and west, and a place 70 degrees out sits on the limb. 60 is half of `FAR_PAIR_DEG`, so two
- *  places less than 120 apart are each within it from their midpoint. */
+ *  places less than 120 apart are each within it from their midpoint. On the flat map the window is
+ *  wider than the world's middle, so the limit is skipped and the test on screen decides alone. */
 export const IN_VIEW_MAX_DEG = 60;
 
 /** True when the place is on the near side of the globe, within `IN_VIEW_MAX_DEG` of the centre of
- *  the view, and on screen inside the part of the map that is not under the bar (the map's padding),
- *  with a margin of `IN_VIEW_MARGIN` of that part's shorter side. */
+ *  the view (on the globe only), and on screen inside the part of the map that is not under the bar
+ *  (the map's padding), with a margin of `IN_VIEW_MARGIN` of that part's shorter side. */
 export function placeInView(map: FollowViewMap, place: LngLat): boolean {
   if (map.transform.isLocationOccluded(place)) return false;
-  if (greatCircleDeg(place, map.getCenter()) > IN_VIEW_MAX_DEG) return false;
+  if (!mapIsFlat(map) && greatCircleDeg(place, map.getCenter()) > IN_VIEW_MAX_DEG) return false;
   const { x, y } = map.project(place);
   if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
   const { clientWidth: w, clientHeight: h } = map.getCanvas();

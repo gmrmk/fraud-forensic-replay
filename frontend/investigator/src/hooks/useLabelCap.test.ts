@@ -25,12 +25,14 @@ type Listener = () => void;
 
 /** A map with the calls the hook makes. `swapStyle` is a destructive setStyle: every layer is
  *  back to its shipped filter and `style.load` fires. `setCamera` moves the camera with no event;
- *  `move` ends a move: the camera is set, the map is at rest and `moveend` fires. */
-function fakeMap(opts: { center?: { lng: number; lat: number }; zoom?: number } = {}) {
+ *  `move` ends a move: the camera is set, the map is at rest and `moveend` fires. `flip` changes
+ *  the projection the map reports and fires `projectiontransition`, as the library does. */
+function fakeMap(opts: { center?: { lng: number; lat: number }; zoom?: number; flat?: boolean } = {}) {
   let center = opts.center ?? { lng: 10, lat: 20 };
   let zoom = opts.zoom ?? 2;
   let moving = false;
   let layersPresent = true;
+  let flat = opts.flat ?? false;
   const filters = new Map<string, unknown>(SHIPPED);
   const listeners = new Map<string, Set<Listener>>();
   const setFilter = vi.fn((id: string, f: unknown) => {
@@ -42,6 +44,7 @@ function fakeMap(opts: { center?: { lng: number; lat: number }; zoom?: number } 
     isMoving: () => moving,
     getLayer: (id) => (layersPresent && filters.has(id) ? { id } : undefined),
     setFilter,
+    getProjection: () => ({ type: flat ? "mercator" : "globe" }),
     on: vi.fn((type: string, fn: Listener) => {
       if (!listeners.has(type)) listeners.set(type, new Set());
       listeners.get(type)!.add(fn);
@@ -77,6 +80,10 @@ function fakeMap(opts: { center?: { lng: number; lat: number }; zoom?: number } 
     },
     setLayersPresent: (v: boolean) => {
       layersPresent = v;
+    },
+    flip: (toFlat: boolean) => {
+      flat = toFlat;
+      emit("projectiontransition");
     },
   };
 }
@@ -160,18 +167,21 @@ describe("useLabelCap", () => {
     expect(withinOf(m, "label_town")).toEqual(["within", capPolygon(-100, 31.1, LABEL_CAP_DEG)]);
   });
 
-  it("listens to style.load and moveend and to nothing else, and clears both on unmount", () => {
+  it("listens to style.load, moveend and projectiontransition and to nothing else, and clears all three on unmount", () => {
     const m = fakeMap();
     const { unmount } = renderHook(() => useLabelCap(m.map, shippedStyle));
-    expect([...m.listeners.keys()].sort()).toEqual(["moveend", "style.load"]);
+    expect([...m.listeners.keys()].sort()).toEqual(["moveend", "projectiontransition", "style.load"]);
     for (const t of ["move", "movestart", "render"]) expect(m.listeners.has(t)).toBe(false);
     expect(m.listeners.get("moveend")!.size).toBe(1);
+    expect(m.listeners.get("projectiontransition")!.size).toBe(1);
     expect(m.listeners.get("style.load")!.size).toBe(1);
     unmount();
     expect(m.listeners.get("moveend")!.size).toBe(0);
+    expect(m.listeners.get("projectiontransition")!.size).toBe(0);
     expect(m.listeners.get("style.load")!.size).toBe(0);
     m.setFilter.mockClear();
     m.emit("moveend");
+    m.emit("projectiontransition");
     m.emit("style.load");
     expect(m.setFilter).not.toHaveBeenCalled();
   });
@@ -280,6 +290,42 @@ describe("useLabelCap", () => {
     for (const src of [capSource, hookSource]) {
       expect(src).not.toMatch(/Date\.now|new Date|performance\.now|setTimeout|setInterval|requestAnimationFrame/);
     }
+  });
+});
+
+// On the flat map no name runs off a sphere, so every layer keeps its shipped filter.
+describe("the label cap on the flat map", () => {
+  it("sets no cap when it is installed on the flat map", () => {
+    const m = fakeMap({ center: HOUSTON, zoom: 2, flat: true });
+    renderHook(() => useLabelCap(m.map, shippedStyle));
+    expectShipped(m);
+  });
+
+  it("hands back the shipped filters at a flip to the flat map, and caps round the camera at a flip back", () => {
+    const m = fakeMap({ center: HOUSTON, zoom: 2 });
+    renderHook(() => useLabelCap(m.map, shippedStyle));
+    expect(withinOf(m)).toEqual(["within", capPolygon(HOUSTON.lng, HOUSTON.lat, LABEL_CAP_DEG)]);
+    m.flip(true);
+    expectShipped(m);
+    m.flip(false);
+    expect(withinOf(m)).toEqual(["within", capPolygon(HOUSTON.lng, HOUSTON.lat, LABEL_CAP_DEG)]);
+    expectAtMostOneCap(m.filters);
+  });
+
+  it("sets no cap after a theme swap on the flat map", () => {
+    const m = fakeMap({ center: HOUSTON, zoom: 2, flat: true });
+    renderHook(() => useLabelCap(m.map, shippedStyle));
+    m.swapStyle();
+    expectShipped(m);
+  });
+
+  it("sets no cap at a move's destination or at its end on the flat map", () => {
+    const m = fakeMap({ center: HOUSTON, zoom: 2, flat: true });
+    const { result } = renderHook(() => useLabelCap(m.map, shippedStyle));
+    result.current(startFlight(m), { lng: LAGOS.lng, lat: LAGOS.lat });
+    expectShipped(m);
+    m.move(LAGOS.lng, LAGOS.lat);
+    expectShipped(m);
   });
 });
 

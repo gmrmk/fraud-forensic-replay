@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ScenarioSwitcher } from "./ScenarioSwitcher";
 import { useTheme } from "../store/theme";
+import { useMapMode } from "../store/map-mode";
 
 // The build flag is a getter so one case can be a static build and the rest the live app.
 const flag = vi.hoisted(() => ({ isStatic: false }));
@@ -324,5 +325,41 @@ describe("ScenarioSwitcher: a pick where the browser keeps no site data", () => 
     const address = await pickOther();
     expect(address).not.toMatch(/scenario=/);
     expect(address).toMatch(/theme=light/);
+  });
+});
+
+describe("ScenarioSwitcher: a pick on the flat map", () => {
+  beforeEach(() => useMapMode.setState({ shape: "flat" }));
+  afterEach(() => useMapMode.setState({ shape: "globe" }));
+
+  /** Opens the list, picks the second story, and returns the address asked for before the reload. */
+  async function pickOther(): Promise<string> {
+    const replace = vi.spyOn(window.history, "replaceState");
+    stubFetch();
+    let asked = "";
+    const reload = vi.fn(() => {
+      asked = String(replace.mock.calls.at(-1)?.[2]);
+    });
+    render(<ScenarioSwitcher reload={reload} />);
+    fireEvent.click(await screen.findByRole("button", { name: /scenario/i }));
+    fireEvent.click(await screen.findByRole("option", { name: /Concordia-generated/ }));
+    await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+    return asked;
+  }
+
+  it("reloads to an address that names the flat map where storage works", async () => {
+    const address = await pickOther();
+    expect(address).toMatch(/[?&]map=flat(&|$)/);
+    expect(address).not.toMatch(/scenario=|t=|sel=/);
+  });
+
+  it("reloads to an address that names the flat map where storage is refused", async () => {
+    flag.isStatic = true;
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    const address = await pickOther();
+    expect(address).toMatch(/[?&]map=flat(&|$)/);
+    expect(address).toMatch(/[?&]scenario=card-fraud-concordia(&|$)/);
   });
 });

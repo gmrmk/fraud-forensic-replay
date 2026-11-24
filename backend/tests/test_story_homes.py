@@ -114,7 +114,8 @@ def project(lat: float, lng: float, home: dict[str, float], h: int) -> tuple[flo
     """The pixel (x, y) of a place at the opening, or None when it is on the far side of the globe.
 
     theta is the great-circle angle from the home's centre and beta the initial bearing; the
-    centre sits at the padded middle (W / 2, (H - h) / 2), the bottom padding being the stack's height, app/hooks/useBarPadding.ts:165-169).
+    centre sits at the padded middle, (W / 2, (H - h) / 2), the bottom padding being the stack's
+    height (the app's hooks/useBarPadding.ts).
     """
     c = camera_distance()
     r = radius_px(opening_zoom(home, h), home["lat"])

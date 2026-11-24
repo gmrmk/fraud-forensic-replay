@@ -26,7 +26,7 @@ describe("the kind switch's words", () => {
   it("names the row, then says what the switch does", () => {
     expect(kindSwitchWords("Sign-in")).toEqual([
       "Sign-in",
-      "Shows or hides the records of this kind on the globe and the Timeline.",
+      "Shows or hides the records of this kind on the map and the Timeline.",
     ]);
   });
 
@@ -151,6 +151,10 @@ describe("the writing rules a script can check", () => {
       expect(s, s).not.toMatch(/\b(unfold|close|closed)\b/i);
       expect(s, s).not.toMatch(/\b(fraud|suspicious|risk|cause|because)\b/i);
     }
+  });
+
+  it("calls the map the map on either shape: no line holds the word globe", () => {
+    for (const s of all) expect(s, s).not.toMatch(/globe/i);
   });
 
   it("uses fold and open for a section", () => {

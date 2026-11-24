@@ -12,8 +12,8 @@
  *    bearing/pitch term in its view matrix, so its markers counter-rotate under
  *    right-drag ("contra-rotating spheres"). No flag fixes a missing matrix
  *    term.
- *  - The bundled style names the globe projection; setupLayers sets it again on every
- *    style load, so a theme swap keeps it.
+ *  - The bundled style names the projection of the store's shape (store/map-mode); the setup on
+ *    every style load applies that shape again, so a theme swap keeps it.
  *
  * Marker palette / glyph (ratified N10, 2026-05-28): auth cyan, fraud red,
  * login magenta, place grey; each a small full-alpha dot inside a large
@@ -31,6 +31,9 @@ import { ringFacts } from "../lib/time-words";
 import { KIND_SLOT } from "../theme/entity-mapping";
 import { useOnMenu } from "./LayerRow";
 import { routeBasemapRequest } from "../lib/globe/basemap";
+import { applyMapShape } from "../lib/globe/projection";
+import { bindShapeMark } from "../lib/globe/shapeMark";
+import { useMapMode } from "../store/map-mode";
 import { cameraKnown, openingCamera } from "../lib/globe/openingCamera";
 import { openingLink } from "../hooks/useShareLink";
 import type { ScenarioHome } from "../lib/scenarios";
@@ -185,7 +188,7 @@ export function GlobeMap({
   // True when the camera opened on the whole globe (read at the first style load and again at each
   // home move): the camera may then zoom out for the open bar.
   const [fitToBar, setFitToBar] = useState(false);
-  // True once the basemap style + globe projection are loaded, so the marker
+  // True once the basemap style + the shape's projection are loaded, so the marker
   // source-refresh / visibility effects know the sources + layers exist.
   const mapLoadedRef = useRef(false);
   // True once the initial setup has run. Gates the first `style.load` body so
@@ -340,7 +343,7 @@ export function GlobeMap({
         rebuildRef.current?.();        // setupLayers + arc + repopulate + sel restore
         mapLoadedRef.current = true;
       });
-      map.setStyle(styleFor(nextTheme), { diff: false });
+      map.setStyle(styleFor(nextTheme, useMapMode.getState().shape), { diff: false });
     };
 
     const unsub = useTheme.subscribe((s, prev) => {
@@ -348,7 +351,12 @@ export function GlobeMap({
       if (s.theme !== prev.theme) swapBasemap(s.theme);
       else if (s.color !== prev.color) repaint(s.theme, s.color);
     });
-    return () => { unsub(); };
+    // A change of shape goes to a loaded map only; a style still loading ends in runSetup, which applies the store's shape.
+    const unsubShape = useMapMode.subscribe((s, prev) => {
+      const map = mapRef.current;
+      if (s.shape !== prev.shape && map && mapLoadedRef.current) applyMapShape(map, s.shape);
+    });
+    return () => { unsub(); unsubShape(); };
   }, []);
 
   // TARGET-click pulse/bloom (extracted to useBloomPulse for the 800-line cap):
@@ -398,9 +406,10 @@ export function GlobeMap({
   useGlobeTips(badgeMap, tipInput);
 
   // The selected record's place on the screen, in viewport pixels, on the map's container: the
-  // crawl's check that the bar covers no mark reads it. Written whenever the selection changes and
-  // after each `moveend` (a padding change, a zoom and a resize all end in one); removed when
-  // nothing is selected or the record has no place.
+  // crawl's check that the bar covers no mark reads it. Written whenever the selection changes,
+  // after each `moveend` (a padding change, a zoom and a resize all end in one) and at the library's
+  // `projectiontransition` (a change of shape moves every point); removed when nothing is selected
+  // or the record has no place.
   useEffect(() => {
     const el = containerRef.current;
     if (!badgeMap || !el) return;
@@ -414,24 +423,32 @@ export function GlobeMap({
     };
     write();
     badgeMap.on("moveend", write);
+    badgeMap.on("projectiontransition", write);
     const unsub = useSelection.subscribe(write);
     return () => {
       badgeMap.off("moveend", write);
+      badgeMap.off("projectiontransition", write);
       unsub();
       el.removeAttribute("data-selected-point");
     };
   }, [badgeMap]);
+  // The page's mark of the shape the map draws, for the checks; bound once the map has loaded.
+  useEffect(() => (badgeMap && containerRef.current ? bindShapeMark(badgeMap, containerRef.current) : undefined), [badgeMap]);
 
   // Construct the map once the opening camera is known. Clean up on unmount.
   useEffect(() => {
     if (!containerRef.current || !known) return;
     const cam = openingCamera(INITIAL_VIEW, openingLink, scenarioHomeRef.current ?? null);
+    // Read once, not as a hook value: a hook value would rebuild the map on every change of shape.
+    const shape = useMapMode.getState().shape;
 
     const map = new maplibregl.Map({
       container: containerRef.current,
       // Init with the CURRENT theme's basemap so first paint matches the theme
-      // (no dark→light flash on a light-first load).
-      style: styleFor(useTheme.getState().theme),
+      // (no dark→light flash on a light-first load). The style carries the shape's projection, and the
+      // world's copies match the shape, so the map is in its shape from the first frame.
+      style: styleFor(useTheme.getState().theme, shape),
+      renderWorldCopies: shape === "globe",
       center: cam.center,
       zoom: cam.zoom,
       pitch: cam.pitch,
@@ -467,12 +484,13 @@ export function GlobeMap({
 
     // The single re-setup entry point (teardown contract). setStyle({diff:false})
     // WIPES every user-added source/layer/custom-layer (verified vs maplibre-gl
-    // 5.24 _updateStyle → style._remove), so all of setupLayers' output - globe
-    // projection, sky, sources, circle layers, marker click
+    // 5.24 _updateStyle → style._remove), so all of setupLayers' output - sky,
+    // sources, circle layers, marker click
     // binds, AND the welded arc custom layer (setupLayers owns createArcLayer) -
-    // is rebuilt here. setupLayers does NOT restore transient feature-state: we
-    // re-apply the click-ack `sel` on the selected entity; the pin-drop `land`
-    // is intentionally left to re-derive from the landing driver.
+    // is rebuilt here, after the store's shape is applied to the loaded style.
+    // setupLayers does NOT restore transient feature-state: we re-apply the click-ack `sel` on the
+    // selected entity; the pin-drop `land` is intentionally left to re-derive from the landing
+    // driver.
     const runSetup = (): void => {
       const { theme, color } = useTheme.getState();
       // Unsubscribe the PRIOR run's delegated marker binds
@@ -481,6 +499,7 @@ export function GlobeMap({
       // on every theme swap (a marker click would fire navigate N+1 times after N
       // flips). null on the initial load - nothing to tear down yet.
       teardownLayersRef.current?.();
+      applyMapShape(map, useMapMode.getState().shape);
       const teardownSetup = setupLayers(
         map,
         { markerHandlersRef, pathsRef },
