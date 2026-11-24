@@ -1,0 +1,22 @@
+[
+ {
+  "id": "og-0001",
+  "org_id": "org-24892",
+  "org_name": "Belmaren Central",
+  "timestamp": 0,
+  "city": "Seattle",
+  "country": "US",
+  "lat": 47.6062,
+  "lng": -122.3321
+ },
+ {
+  "id": "og-0002",
+  "org_id": "org-69414",
+  "org_name": "Belmaren Field Lab",
+  "timestamp": 0,
+  "city": "Tacoma",
+  "country": "US",
+  "lat": 47.2529,
+  "lng": -122.4443
+ }
+]

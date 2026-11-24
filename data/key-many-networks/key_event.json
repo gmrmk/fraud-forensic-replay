@@ -1,0 +1,47 @@
+[
+ {
+  "id": "ke-0001",
+  "timestamp": "2026-11-05T17:20:00+00:00",
+  "principal_id": "key-A26S3T9M",
+  "event": "scope added",
+  "change": "files",
+  "seat_id": "seat-27310",
+  "channel": "console",
+  "network_id": "net-201",
+  "ip": "198.51.100.21",
+  "city": "Portland",
+  "country": "US",
+  "lat": 45.5152,
+  "lng": -122.6784
+ },
+ {
+  "id": "ke-0002",
+  "timestamp": "2026-11-08T23:05:00+00:00",
+  "principal_id": "key-A26S3T9M",
+  "event": "spend limit changed",
+  "change": "2000 to 6000 USD",
+  "seat_id": "seat-27310",
+  "channel": "console",
+  "network_id": "net-201",
+  "ip": "198.51.100.21",
+  "city": "Portland",
+  "country": "US",
+  "lat": 45.5152,
+  "lng": -122.6784
+ },
+ {
+  "id": "ke-0003",
+  "timestamp": "2026-11-10T17:40:55+00:00",
+  "principal_id": "key-A26S3T9M",
+  "event": "key viewed",
+  "change": null,
+  "seat_id": "seat-54960",
+  "channel": "console",
+  "network_id": "net-101",
+  "ip": "203.0.113.17",
+  "city": "Amsterdam",
+  "country": "NL",
+  "lat": 52.3676,
+  "lng": 4.9041
+ }
+]

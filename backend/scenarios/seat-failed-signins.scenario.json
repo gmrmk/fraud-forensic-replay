@@ -1,0 +1,102 @@
+{
+  "id": "seat-failed-signins",
+  "label": "Platform · failed sign-ins, then a grant",
+  "db": "data/seat-failed-signins.db",
+  "home": { "lat": 42, "lng": -100, "zoom": 2.6 },
+  "nodes": [
+    {
+      "kind": "org", "label": "Organisation", "palette": "#4da3ff", "source": "json",
+      "file": "data/seat-failed-signins/org.json",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "${org_name}", "secondary": "${org_id}",
+      "pivotable": ["org_id"],
+      "omit": ["timestamp"]
+    },
+    {
+      "kind": "seat", "label": "Seat", "palette": "#9aa5b1", "source": "json",
+      "file": "data/seat-failed-signins/seat.json",
+      "primary": "${seat_name}", "secondary": "${seat_id}",
+      "pivotable": ["seat_id"],
+      "sections": [
+        { "id": "seat", "label": "Seat", "fields": ["seat_id", "seat_name", "signins_total", "addresses", "first_signin_on", "role", "created_on", "client"] }
+      ],
+      "omit": ["timestamp"]
+    },
+    {
+      "kind": "signin", "label": "Sign-in", "palette": "#7ee787", "source": "json",
+      "file": "data/seat-failed-signins/signin.json",
+      "timestamp": "timestamp",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "path": true, "pathBy": "seat_id", "territory": false,
+      "primary": "${outcome} · ${network_id}", "secondary": "${seat_id} · ${attempts} in ${window_min} min",
+      "pivotable": ["seat_id", "network_id"],
+      "sections": [
+        { "id": "sign-in", "label": "Sign-in", "fields": ["seat_id", "outcome", "attempts", "window_min", "method", "client", "timestamp", "seconds_since_previous", "km_from_previous"] },
+        { "id": "address", "label": "Address", "fields": ["network_id", "ip", "city", "country"] }
+      ]
+    },
+    {
+      "kind": "request_sample", "label": "Request", "palette": "#56d4dd", "source": "json",
+      "file": "data/seat-failed-signins/request_sample.json",
+      "timestamp": "timestamp",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "Request · ${network_id}", "secondary": "${seat_id}",
+      "pivotable": ["seat_id", "network_id"],
+      "sections": [
+        { "id": "request", "label": "Request", "fields": ["seat_id", "endpoint", "response_code", "timestamp"] },
+        { "id": "address", "label": "Address", "fields": ["network_id", "ip", "city", "country"] }
+      ]
+    },
+    {
+      "kind": "credential_event", "label": "Credential event", "palette": "#c4a1ff", "source": "json",
+      "file": "data/seat-failed-signins/credential_event.json",
+      "timestamp": "timestamp",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "${event} · ${lifetime_h} h", "secondary": "${seat_id}",
+      "pivotable": ["seat_id"],
+      "sections": [
+        { "id": "credential", "label": "Credential", "fields": ["seat_id", "event", "lifetime_h", "scope", "created_in", "timestamp"] },
+        { "id": "address", "label": "Address", "fields": ["network_id", "ip", "city", "country"] }
+      ]
+    },
+    {
+      "kind": "reset", "label": "Limit reset", "palette": "#ffa657", "source": "json",
+      "file": "data/seat-failed-signins/reset.json",
+      "timestamp": "timestamp",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "Limit reset", "secondary": "${seat_id}",
+      "pivotable": ["seat_id"],
+      "sections": [
+        { "id": "reset", "label": "Reset", "fields": ["seat_id", "timestamp"] },
+        { "id": "address", "label": "Address", "fields": ["network_id", "city", "country"] }
+      ]
+    },
+    {
+      "kind": "usage_hour", "label": "Requests per hour", "palette": "#f5a623", "source": "json",
+      "file": "data/seat-failed-signins/usage_hour.json",
+      "timestamp": "timestamp",
+      "primary": "${requests} requests", "secondary": "${seat_id}",
+      "pivotable": ["seat_id"],
+      "magnitude": "requests", "magnitudeLabel": "Requests", "magnitudeUnit": "requests",
+      "sections": [
+        { "id": "usage", "label": "Usage", "fields": ["seat_id", "requests", "timestamp"] }
+      ]
+    },
+    {
+      "kind": "decision", "label": "Decision", "palette": "#ff6b6b", "source": "json",
+      "file": "data/seat-failed-signins/decision.json",
+      "timestamp": "decided_at",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "${outcome} · ${target_label}", "secondary": "${decided_by} · ${status}",
+      "pivotable": ["seat_id"],
+      "decision": { "status": "status", "outcome": "outcome", "note": "note", "actor": "decided_by", "target": "target_label", "key": "seat_id", "event": "event_ids" }
+    }
+  ],
+  "rows": { "by": "seat_id", "member": "network_id" },
+  "fields": {
+    "seat_id": { "label": "Seat" },
+    "network_id": { "label": "Network" }
+  },
+  "arrows": [],
+  "rules": []
+}

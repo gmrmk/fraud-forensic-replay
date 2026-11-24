@@ -1,0 +1,76 @@
+{
+  "id": "volume-step",
+  "label": "Platform · daily volume and failed calls",
+  "db": "data/volume-step.db",
+  "home": { "lat": 42, "lng": -22, "zoom": 2 },
+  "nodes": [
+    {
+      "kind": "org", "label": "Organisation", "palette": "#4da3ff", "source": "json",
+      "file": "data/volume-step/org.json",
+      "primary": "${org_name}", "secondary": "Enrolled ${enrolled_since}",
+      "pivotable": ["org_id"]
+    },
+    {
+      "kind": "workspace", "label": "Workspace", "palette": "#7ee787", "source": "json",
+      "file": "data/volume-step/workspace.json",
+      "primary": "${workspace_name}", "secondary": "${retention_setting}",
+      "pivotable": ["workspace_id"]
+    },
+    {
+      "kind": "usage_day", "label": "Daily requests", "palette": "#f5a623", "source": "json",
+      "file": "data/volume-step/usage_day.json",
+      "timestamp": "timestamp",
+      "primary": "${requests} requests", "secondary": "${workspace_id}",
+      "pivotable": ["workspace_id"],
+      "magnitude": "requests", "magnitudeLabel": "Requests", "magnitudeUnit": "requests",
+      "sections": [
+        { "id": "day", "label": "Day", "fields": ["workspace_id", "requests", "timestamp"] }
+      ]
+    },
+    {
+      "kind": "period", "label": "Period", "palette": "#c4a1ff", "source": "json",
+      "file": "data/volume-step/period.json",
+      "timestamp": "timestamp",
+      "primary": "${evaluated} evaluated · ${events} acted on", "secondary": "${workspace_id}",
+      "pivotable": ["workspace_id"],
+      "sections": [
+        { "id": "period", "label": "Period", "fields": ["workspace_id", "evaluated", "events", "timestamp"] }
+      ]
+    },
+    {
+      "kind": "failed_call_day", "label": "Failed calls", "palette": "#ff9f6b", "source": "json",
+      "file": "data/volume-step/failed_call_day.json",
+      "timestamp": "timestamp",
+      "primary": "${failed_calls} failed calls", "secondary": "${cause}",
+      "pivotable": ["cause"],
+      "magnitude": "failed_calls", "magnitudeLabel": "Failed calls", "magnitudeUnit": "calls",
+      "sections": [
+        { "id": "day", "label": "Day", "fields": ["failed_calls", "cause", "timestamp"] }
+      ]
+    },
+    {
+      "kind": "notice", "label": "Notice", "palette": "#8fb4c9", "source": "json",
+      "file": "data/volume-step/notice.json",
+      "timestamp": "timestamp",
+      "primary": "Notice · ${delivery}", "secondary": "${workspace_id}",
+      "pivotable": ["workspace_id"],
+      "sections": [
+        { "id": "notice", "label": "Notice", "fields": ["workspace_id", "delivery", "timestamp"] }
+      ]
+    },
+    {
+      "kind": "decision", "label": "Decision", "palette": "#ff6b6b", "source": "json",
+      "file": "data/volume-step/decision.json",
+      "timestamp": "decided_at",
+      "primary": "${outcome} · ${target_label}", "secondary": "${decided_by} · ${status}",
+      "pivotable": ["org_id"],
+      "decision": { "status": "status", "outcome": "outcome", "note": "note", "actor": "decided_by", "target": "target_label", "key": "org_id", "event": "event_ids" }
+    }
+  ],
+  "rows": { "by": "workspace_id" },
+  "fields": {
+    "workspace_id": { "label": "Workspace" }
+  },
+  "arrows": [],
+  "rules": []
+}

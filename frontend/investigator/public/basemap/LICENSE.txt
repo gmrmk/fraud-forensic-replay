@@ -1,0 +1,49 @@
+Vendored basemap files: style, sprites and glyph ranges
+=======================================================
+
+Retrieved:   2026-11-14, by scripts/fetch-basemap-assets.mjs (run by hand; the app never runs it)
+Source:      OpenFreeMap, https://openfreemap.org (styles kept at
+             https://github.com/hyperknot/openfreemap-styles)
+Licences:    licenses/ in this folder holds three upstream licence files, verbatim.
+             openfreemap-styles-LICENSE.md names the style's licences and links to the
+             BSD 3-Clause and CC BY 4.0 texts. osm-liberty-LICENSE.md is the licence file
+             of OSM Liberty, the style's upstream, fetched by hand on 2026-11-14 from
+             https://github.com/maputnik/osm-liberty (branch gh-pages, LICENSE.md): it holds
+             the BSD conditions and disclaimer the style keeps from OSM Bright (the
+             copyright line they refer to is in OSM Bright's own licence file, not stored
+             here) and OSM Liberty's design, icon and font credits (its font line names
+             Roboto; the style stored here uses Noto Sans). noto-fonts-OFL.txt is the text
+             of the SIL Open Font License 1.1.
+
+Style
+-----
+File:        src/lib/globe/basemap/liberty.json (bundled into the app, not served from here)
+What:        the "Liberty" style as served at https://tiles.openfreemap.org/styles/liberty,
+             unchanged. The app replaces its sprite and glyphs addresses with this site's
+             own at run time and restyles some layers per theme.
+Origin:      a fork of OSM Liberty (https://github.com/maputnik/osm-liberty), itself a fork
+             of OSM Bright.
+License:     code BSD 3-Clause, design CC BY 4.0 (see licenses/openfreemap-styles-LICENSE.md;
+             the BSD conditions and disclaimer are in licenses/osm-liberty-LICENSE.md)
+
+Sprites
+-------
+Files:       sprites/ofm.json, sprites/ofm.png, sprites/ofm@2x.json, sprites/ofm@2x.png
+What:        the style's sprite sheet, unchanged.
+License:     Maki POI icon set, CC0 1.0 Universal; the right arrow is public domain
+             (see licenses/openfreemap-styles-LICENSE.md)
+
+Glyphs
+------
+Files:       fonts/Noto Sans Regular/, fonts/Noto Sans Bold/, fonts/Noto Sans Italic/,
+             each with the ranges 0-255, 256-511, 512-767 and 8192-8447 (.pbf)
+What:        signed-distance-field glyph ranges of Noto Sans as OpenFreeMap serves them,
+             unchanged. Basic Latin and Latin-1, Latin Extended-A and B, IPA and spacing
+             marks, general punctuation. A label that needs another range has it requested
+             from the tile host.
+License:     SIL Open Font License 1.1 (see licenses/noto-fonts-OFL.txt)
+
+Not stored here
+---------------
+Map tiles. They are requested from tiles.openfreemap.org at run time. The credit shown in
+the app is: OpenFreeMap, (c) OpenMapTiles, data from OpenStreetMap.

@@ -1,0 +1,129 @@
+{
+  "id": "key-many-networks",
+  "label": "Platform · one key, many networks",
+  "db": "data/key-many-networks.db",
+  "home": { "lat": 30, "lng": -40, "zoom": 1.4 },
+  "nodes": [
+    {
+      "kind": "org", "label": "Organisation", "palette": "#4da3ff", "source": "json",
+      "file": "data/key-many-networks/org.json",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "${org_name}", "secondary": "${org_id}",
+      "pivotable": ["org_id"],
+      "sections": [
+        { "id": "org", "label": "Organisation", "fields": ["org_id", "org_name", "plan", "networks_both_orgs"] },
+        { "id": "account", "label": "Account", "fields": ["billing_city", "billing_country", "created_on", "seats_total", "seats_active_7d"] },
+        { "id": "controls", "label": "Controls", "fields": ["single_sign_on", "admin_seat_id", "keys_active", "networks_30d"] },
+        { "id": "spend", "label": "Spend", "fields": ["spend_limit_usd", "spend_30d_usd"] }
+      ],
+      "omit": ["timestamp"]
+    },
+    {
+      "kind": "principal", "label": "Key or seat", "palette": "#c4a1ff", "source": "json",
+      "file": "data/key-many-networks/principal.json",
+      "primary": "${principal_name}", "secondary": "${principal_id}",
+      "pivotable": ["principal_id", "org_id"],
+      "sections": [
+        { "id": "principal", "label": "Key or seat", "fields": ["principal_id", "principal_name", "networks_seen", "requests_18d"] },
+        { "id": "use", "label": "Use", "fields": ["last_used_at", "last_network_id", "networks_7d", "requests_7d", "client"] },
+        { "id": "setup", "label": "Setup", "fields": ["org_id", "created_on", "created_in", "scopes", "rotations"] }
+      ],
+      "omit": ["timestamp"]
+    },
+    {
+      "kind": "network_seen", "label": "Network seen", "palette": "#7ee787", "source": "json",
+      "file": "data/key-many-networks/network_seen.json",
+      "timestamp": "timestamp",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "path": true, "pathBy": "principal_id", "territory": false,
+      "primary": "${principal_id} · ${network_id}", "secondary": "${network_type} · after ${previous_network}",
+      "pivotable": ["principal_id", "network_id"],
+      "sections": [
+        { "id": "network", "label": "Network", "fields": ["principal_id", "network_id", "network_type", "previous_network", "timestamp"] },
+        { "id": "address", "label": "Address", "fields": ["ip", "host_name", "city", "country"] },
+        { "id": "activity", "label": "Activity", "fields": ["seconds_since_previous", "km_from_previous", "requests_on_network", "others_on_network", "first_seen_at", "client"] }
+      ]
+    },
+    {
+      "kind": "reset", "label": "Limit reset", "palette": "#f5a623", "source": "json",
+      "file": "data/key-many-networks/reset.json",
+      "timestamp": "timestamp",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "${seat_id} · ${after_offer_s} s after the offer opened", "secondary": "${org_id}",
+      "pivotable": ["org_id", "seat_id", "network_id"],
+      "sections": [
+        { "id": "reset", "label": "Reset", "fields": ["org_id", "seat_id", "after_offer_s", "other_seats", "timestamp"] },
+        { "id": "request", "label": "Request", "fields": ["channel", "network_id", "ip", "city", "country"] },
+        { "id": "limit", "label": "Limit", "fields": ["limit_name", "used_before_percent", "requests_before", "offer_code"] }
+      ]
+    },
+    {
+      "kind": "usage_day", "label": "Daily requests", "palette": "#ffd166", "source": "json",
+      "file": "data/key-many-networks/usage_day.json",
+      "timestamp": "timestamp",
+      "primary": "${requests} requests", "secondary": "${output_tokens_m} M output tokens",
+      "pivotable": [],
+      "magnitude": "requests", "magnitudeLabel": "Requests", "magnitudeUnit": "requests",
+      "sections": [
+        { "id": "usage", "label": "Day", "fields": ["requests", "output_tokens_m", "timestamp"] },
+        { "id": "split", "label": "Split", "fields": ["requests_by_key", "requests_by_seats", "networks"] },
+        { "id": "load", "label": "Load", "fields": ["input_tokens_m", "error_responses", "peak_hour_utc"] }
+      ]
+    },
+    {
+      "kind": "signin", "label": "Sign-in", "palette": "#ff9bd2", "source": "json",
+      "file": "data/key-many-networks/signin.json",
+      "timestamp": "timestamp",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "path": true, "pathBy": "seat_id", "territory": false,
+      "filter": { "field": "network_type", "label": "Network type" },
+      "primary": "${outcome} · ${seat_id}", "secondary": "${network_id} · ${city}",
+      "pivotable": ["seat_id", "org_id", "network_id"],
+      "sections": [
+        { "id": "sign-in", "label": "Sign-in", "fields": ["seat_id", "org_id", "outcome", "method", "client", "timestamp", "seconds_since_previous", "km_from_previous"] },
+        { "id": "address", "label": "Address", "fields": ["network_id", "network_type", "ip", "city", "country"] }
+      ]
+    },
+    {
+      "kind": "key_event", "label": "Key event", "palette": "#a5d6ff", "source": "json",
+      "file": "data/key-many-networks/key_event.json",
+      "timestamp": "timestamp",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "${event} · ${principal_id}", "secondary": "${seat_id} · ${city}",
+      "pivotable": ["principal_id", "seat_id", "network_id"],
+      "sections": [
+        { "id": "key-event", "label": "Key event", "fields": ["principal_id", "event", "change", "seat_id", "channel", "timestamp"] },
+        { "id": "address", "label": "Address", "fields": ["network_id", "ip", "city", "country"] }
+      ]
+    },
+    {
+      "kind": "request_sample", "label": "Request", "palette": "#56d4dd", "source": "json",
+      "file": "data/key-many-networks/request_sample.json",
+      "timestamp": "timestamp",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "${response_code} · ${endpoint}", "secondary": "${network_id} · ${city}",
+      "pivotable": ["principal_id", "network_id"],
+      "sections": [
+        { "id": "request", "label": "Request", "fields": ["principal_id", "endpoint", "response_code", "milliseconds", "output_tokens", "timestamp"] },
+        { "id": "address", "label": "Address", "fields": ["network_id", "network_type", "ip", "city", "country"] }
+      ]
+    },
+    {
+      "kind": "decision", "label": "Decision", "palette": "#ff6b6b", "source": "json",
+      "file": "data/key-many-networks/decision.json",
+      "timestamp": "decided_at",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "filter": { "field": "status", "label": "Status" },
+      "primary": "${outcome} · ${target_label}", "secondary": "${decided_by} · ${status}",
+      "pivotable": ["org_id"],
+      "decision": { "status": "status", "outcome": "outcome", "note": "note", "actor": "decided_by", "target": "target_label", "key": "org_id", "event": "event_ids" }
+    }
+  ],
+  "rows": { "by": "principal_id", "member": "network_id" },
+  "fields": {
+    "principal_id": { "label": "Key or seat" },
+    "network_id": { "label": "Network" }
+  },
+  "arrows": [],
+  "rules": []
+}

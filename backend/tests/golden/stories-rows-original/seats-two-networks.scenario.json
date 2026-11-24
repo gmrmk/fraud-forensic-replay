@@ -1,0 +1,69 @@
+{
+  "id": "seats-two-networks",
+  "label": "Platform · seats on two networks",
+  "db": "data/seats-two-networks.db",
+  "home": { "lat": 42, "lng": -22, "zoom": 2 },
+  "nodes": [
+    {
+      "kind": "org", "label": "Organisation", "palette": "#4da3ff", "source": "json",
+      "file": "data/seats-two-networks/org.json",
+      "primary": "${org_name}", "secondary": "${org_id}",
+      "pivotable": ["org_id"]
+    },
+    {
+      "kind": "seat", "label": "Seat", "palette": "#7ee787", "source": "json",
+      "file": "data/seats-two-networks/seat.json",
+      "primary": "${seat_name}", "secondary": "${switches} network changes · ${networks} networks",
+      "pivotable": ["seat_id", "org_id"]
+    },
+    {
+      "kind": "switch_sample", "label": "Network change", "palette": "#c4a1ff", "source": "json",
+      "file": "data/seats-two-networks/switch_sample.json", "timestamp": "timestamp",
+      "primary": "${seat_id}", "secondary": "${previous_network} · ${network_id}",
+      "pivotable": ["seat_id", "network_id"],
+      "sections": [
+        { "id": "change", "label": "Network change", "fields": ["seat_id", "network_id", "previous_network", "timestamp"] }
+      ]
+    },
+    {
+      "kind": "reset", "label": "Limit reset", "palette": "#f5a623", "source": "json",
+      "file": "data/seats-two-networks/reset.json", "timestamp": "timestamp",
+      "primary": "${seat_id}", "secondary": "Reset",
+      "pivotable": ["seat_id"]
+    },
+    {
+      "kind": "safeguard_hour", "label": "Safeguard hour", "palette": "#ff9ecb", "source": "json",
+      "file": "data/seats-two-networks/safeguard_hour.json", "timestamp": "timestamp",
+      "primary": "${events} events", "secondary": "Per hour",
+      "pivotable": [],
+      "magnitude": "events", "magnitudeLabel": "Safeguard events", "magnitudeUnit": "events"
+    },
+    {
+      "kind": "usage_day", "label": "Daily usage", "palette": "#5ad1c9", "source": "json",
+      "file": "data/seats-two-networks/usage_day.json", "timestamp": "timestamp",
+      "primary": "${requests} requests", "secondary": "${output_tokens_k}K output tokens",
+      "pivotable": [],
+      "magnitude": "requests", "magnitudeLabel": "Requests", "magnitudeUnit": "requests"
+    },
+    {
+      "kind": "enrolment", "label": "Enrolment", "palette": "#b8c0cc", "source": "json",
+      "file": "data/seats-two-networks/enrolment.json", "timestamp": "timestamp",
+      "primary": "${tier}", "secondary": "${tiers_without_enrolment} tier cells with no record",
+      "pivotable": ["tier"]
+    },
+    {
+      "kind": "decision", "label": "Decision", "palette": "#ff6b6b", "source": "json",
+      "file": "data/seats-two-networks/decision.json", "timestamp": "decided_at",
+      "primary": "${outcome} · ${target_label}", "secondary": "${decided_by} · ${status}",
+      "pivotable": ["org_id"],
+      "decision": { "status": "status", "outcome": "outcome", "note": "note", "actor": "decided_by", "target": "target_label", "key": "org_id", "event": "event_ids" }
+    }
+  ],
+  "rows": { "by": "seat_id", "member": "network_id" },
+  "fields": {
+    "seat_id": { "label": "Seat" },
+    "network_id": { "label": "Network" }
+  },
+  "arrows": [],
+  "rules": []
+}

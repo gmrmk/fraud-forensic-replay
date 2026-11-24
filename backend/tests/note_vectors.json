@@ -1,0 +1,2492 @@
+{
+ "_about": "Every digit run in this file is a published test card number (4111111111111111, 378282246310005, 4222222222222, 5500000000000004, 4012888888881881, 5555555555554444, 2223000048400011, 6011111111111117, 3530111333300000, 36227206271667, 3056930009020004, 6200000000000005, 6205500000000000004, 6304000000000000, 5063516945005047) or a number generated here to pass or fail the Luhn check; a generated card number is a published one with its prefix swapped and its check digit recomputed. No real card number is in this file.",
+ "_rule": "A run is the longest digit sequence with at most 3 separator characters in a row between digits; a group is a maximal sequence of digits inside a run, with no separator in it. A run is refused when its whole digit string has 13 to 19 digits and passes the Luhn check (the original rule, whatever the digits are), or when a span of whole consecutive groups of it has 13 to 19 digits, passes Luhn, is a brand's number (its leading digits fall in an issuer prefix of one row of the brand table and its length is one that same row uses) and has an accepted layout: a card's layout (one group; or every group 4 digits but the last, which holds 1 to 4; or 4-6-5; or 4-6-4) or a card's layout of the same total with one slip (one group split in two, two neighbouring groups joined, or the boundary of two neighbouring groups moved by one digit); the owner cured the spacing slip on 2026-11-19, and the accepted layouts are listed under layout_vectors. A group of more than 19 digits is never part of a span. The owner narrowed the strict rule on 2026-11-19 because it refused honest notes of bare numbers set side by side. Every character with the Unicode property White_Space is a separator after normalisation (the owner asked for it on 2026-11-19; the code points are listed under separator_vectors, and the white-* vectors pin it). Text is flattened (paragraphs, list items, quote paragraphs and hard breaks joined by one line feed), normalised NFKC, format characters dropped. Entries marked limit are cases the guard does NOT refuse; each is pinned so that nobody later believes otherwise. Entries with a note say which decision of 2026-11-19 moved them. Expected values were computed with the reference guard of the design, the strict ones by hand and then by an independent brute force, and the narrowed ones by an independent brute force of the narrowed rule with the brand table written as one regular expression per brand, not with the guard under test. The slip vectors (ids slip-* and double-slip-*) take their expected values from the measurer's reference of the picked layout test, not from the guard: a number of every brand with one slip in its spacing is refused, with two slips it is allowed as a stated limit.",
+ "text_vectors": [
+  {
+   "id": "visa-plain",
+   "label": "valid 16 digits, no separator",
+   "text": "4111111111111111",
+   "expect": "refused"
+  },
+  {
+   "id": "visa-spaces",
+   "label": "valid 16 digits, spaces",
+   "text": "4111 1111 1111 1111",
+   "expect": "refused"
+  },
+  {
+   "id": "visa-hyphens",
+   "label": "valid 16 digits, hyphens",
+   "text": "4111-1111-1111-1111",
+   "expect": "refused"
+  },
+  {
+   "id": "visa-lf",
+   "label": "valid 16 digits, one line feed between groups",
+   "text": "4111 1111\n1111 1111",
+   "expect": "refused"
+  },
+  {
+   "id": "visa-lf-split",
+   "label": "two paragraphs joined by one line feed",
+   "text": "4111 1111 1111\n1111",
+   "expect": "refused"
+  },
+  {
+   "id": "amex-15",
+   "label": "valid 15 digits",
+   "text": "378282246310005",
+   "expect": "refused"
+  },
+  {
+   "id": "visa-13",
+   "label": "valid 13 digits",
+   "text": "4222222222222",
+   "expect": "refused"
+  },
+  {
+   "id": "luhn-19",
+   "label": "valid 19 digits",
+   "text": "6200000000000000000",
+   "expect": "refused"
+  },
+  {
+   "id": "mc-spaces",
+   "label": "valid 16 digits, other test number",
+   "text": "5500 0000 0000 0004",
+   "expect": "refused"
+  },
+  {
+   "id": "visa-b-hyphens",
+   "label": "valid 16 digits, third test number",
+   "text": "4012-8888-8888-1881",
+   "expect": "refused"
+  },
+  {
+   "id": "fullwidth",
+   "label": "fullwidth digits",
+   "text": "\uff14\uff11\uff11\uff11\uff11\uff11\uff11\uff11\uff11\uff11\uff11\uff11\uff11\uff11\uff11\uff11",
+   "expect": "refused"
+  },
+  {
+   "id": "arabic-indic",
+   "label": "Arabic-Indic digits",
+   "text": "\u0664\u0661\u0661\u0661\u0661\u0661\u0661\u0661\u0661\u0661\u0661\u0661\u0661\u0661\u0661\u0661",
+   "expect": "refused"
+  },
+  {
+   "id": "zero-width",
+   "label": "groups split by a zero-width space",
+   "text": "4111\u200b1111\u200b1111\u200b1111",
+   "expect": "refused"
+  },
+  {
+   "id": "zero-width-plus-space",
+   "label": "groups split by a space and a zero-width space",
+   "text": "4111 \u200b1111 \u200b1111 \u200b1111",
+   "expect": "refused"
+  },
+  {
+   "id": "soft-hyphen",
+   "label": "groups split by a soft hyphen",
+   "text": "4111\u00ad1111\u00ad1111\u00ad1111",
+   "expect": "refused"
+  },
+  {
+   "id": "three-spaces",
+   "label": "groups split by three spaces (the most the rule joins)",
+   "text": "4111   1111   1111   1111",
+   "expect": "refused"
+  },
+  {
+   "id": "nbsp",
+   "label": "groups split by no-break spaces",
+   "text": "4111\u00a01111\u00a01111\u00a01111",
+   "expect": "refused"
+  },
+  {
+   "id": "tab",
+   "label": "groups split by tabs",
+   "text": "4111\t1111\t1111\t1111",
+   "expect": "refused"
+  },
+  {
+   "id": "crlf",
+   "label": "groups split by carriage return and line feed",
+   "text": "4111\r\n1111\r\n1111\r\n1111",
+   "expect": "refused"
+  },
+  {
+   "id": "unicode-hyphen",
+   "label": "groups split by U+2010",
+   "text": "4111\u20101111\u20101111\u20101111",
+   "expect": "refused"
+  },
+  {
+   "id": "minus-sign",
+   "label": "groups split by U+2212",
+   "text": "4111\u22121111\u22121111\u22121111",
+   "expect": "refused"
+  },
+  {
+   "id": "mixed-scripts",
+   "label": "first half fullwidth, second half ASCII",
+   "text": "\uff14\uff11\uff11\uff11\uff11\uff11\uff11\uff1111111111",
+   "expect": "refused"
+  },
+  {
+   "id": "unicode16-digits",
+   "label": "valid 16 digits in the Garay script (new in Unicode 16)",
+   "text": "\ud803\udd44\ud803\udd41\ud803\udd41\ud803\udd41\ud803\udd41\ud803\udd41\ud803\udd41\ud803\udd41\ud803\udd41\ud803\udd41\ud803\udd41\ud803\udd41\ud803\udd41\ud803\udd41\ud803\udd41\ud803\udd41",
+   "expect": "refused"
+  },
+  {
+   "id": "amount-period",
+   "label": "number then a period then cents",
+   "text": "Amount 4111111111111111.00",
+   "expect": "refused"
+  },
+  {
+   "id": "sentence",
+   "label": "number inside a sentence",
+   "text": "The card was 4111 1111 1111 1111 on the receipt.",
+   "expect": "refused"
+  },
+  {
+   "id": "unix-ms-fp",
+   "label": "13 digit Unix ms time (a false positive, stated)",
+   "text": "1763556000000",
+   "expect": "refused"
+  },
+  {
+   "id": "date-range-fp",
+   "label": "two dates with one space (a false positive, stated)",
+   "text": "2026-11-01 2026-11-05",
+   "expect": "refused"
+  },
+  {
+   "id": "unix-ms-ok",
+   "label": "13 digit Unix ms time that fails Luhn",
+   "text": "1763556003600",
+   "expect": "allowed"
+  },
+  {
+   "id": "date-range-ok",
+   "label": "two dates that fail Luhn",
+   "text": "2026-11-01 2026-11-19",
+   "expect": "allowed"
+  },
+  {
+   "id": "date-range-word",
+   "label": "two dates with a word between",
+   "text": "2026-11-01 to 2026-11-19",
+   "expect": "allowed"
+  },
+  {
+   "id": "date-clock",
+   "label": "date and clock",
+   "text": "2026-11-19 12:27",
+   "expect": "allowed"
+  },
+  {
+   "id": "record-id",
+   "label": "record id",
+   "text": "tx-0001042",
+   "expect": "allowed"
+  },
+  {
+   "id": "note-id",
+   "label": "a note id",
+   "text": "note-0123456789abcdef0123456789abcdef",
+   "expect": "allowed"
+  },
+  {
+   "id": "luhn-invalid-16",
+   "label": "16 digits that fail Luhn",
+   "text": "1234567890123456",
+   "expect": "allowed"
+  },
+  {
+   "id": "luhn-invalid-16-spaces",
+   "label": "16 digits with spaces that fail Luhn",
+   "text": "1234 5678 9012 3456",
+   "expect": "allowed"
+  },
+  {
+   "id": "twelve-digits",
+   "label": "12 digits that pass Luhn (below the range)",
+   "text": "411111111116",
+   "expect": "allowed"
+  },
+  {
+   "id": "letter-between",
+   "label": "a letter between groups",
+   "text": "4111 a 1111 1111 1111",
+   "expect": "allowed"
+  },
+  {
+   "id": "phone-us",
+   "label": "phone number with country code",
+   "text": "+1 713-555-0142",
+   "expect": "allowed"
+  },
+  {
+   "id": "phone-intl",
+   "label": "13 digit international phone number that fails Luhn",
+   "text": "+86 138 0013 8000",
+   "expect": "allowed"
+  },
+  {
+   "id": "amount",
+   "label": "an amount",
+   "text": "$1,234,567.89",
+   "expect": "allowed"
+  },
+  {
+   "id": "four-numbers",
+   "label": "four 4 digit numbers",
+   "text": "1042 1043 1044 1045",
+   "expect": "allowed"
+  },
+  {
+   "id": "empty",
+   "label": "empty text",
+   "text": "",
+   "expect": "allowed"
+  },
+  {
+   "id": "shape-alone",
+   "label": "review shape 1: the number alone",
+   "text": "4111111111111111",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-grouped",
+   "label": "review shape 2: grouped by spaces",
+   "text": "4111 1111 1111 1111",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-full-stop",
+   "label": "review shape 3: grouped, then a full stop",
+   "text": "4111 1111 1111 1111.",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-label",
+   "label": "review shape 4: after a label and a colon",
+   "text": "Card: 4111 1111 1111 1111",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-hyphens",
+   "label": "review shape 5 (rebuilt): grouped by hyphens",
+   "text": "4111-1111-1111-1111",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-sentence",
+   "label": "review shape 6 (rebuilt): inside a sentence",
+   "text": "Paid with 4111 1111 1111 1111, thanks",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-code-space",
+   "label": "review shape 7: the number, a space, a 3 digit security code",
+   "text": "4111111111111111 123",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-code-lf",
+   "label": "review shape 8: the number, a line feed, a 3 digit security code",
+   "text": "4111111111111111\n123",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-grouped-code3",
+   "label": "review shape 9: grouped, then a 3 digit code",
+   "text": "4111 1111 1111 1111 123",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-grouped-code4",
+   "label": "review shape 10: grouped, then a 4 digit code",
+   "text": "4111 1111 1111 1111 1234",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-expiry-space",
+   "label": "review shape 11: the number, a space, an expiry MM/YY",
+   "text": "4111111111111111 12/27",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-expiry-tab",
+   "label": "review shape 12: the number, a tab, an expiry MM/YY",
+   "text": "4111111111111111\t12/27",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-expiry-lf",
+   "label": "review shape 13: the number, a line feed, an expiry MM/YY",
+   "text": "4111111111111111\n12/27",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-expiry-dash",
+   "label": "review shape 14: the number, a space, an expiry MM-YY",
+   "text": "4111111111111111 12-27",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-expiry-and-code",
+   "label": "review shape 15 (rebuilt): grouped, expiry as two groups, then a code",
+   "text": "4111 1111 1111 1111 12 27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-time-before",
+   "label": "review shape 16: a clock time before the grouped number",
+   "text": "14:05 4111 1111 1111 1111",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-count-before",
+   "label": "review shape 17: a count before the grouped number",
+   "text": "3 4111 1111 1111 1111",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-date-before",
+   "label": "review shape 18: a date before the grouped number",
+   "text": "2026-11-19 4111 1111 1111 1111",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-order-before",
+   "label": "review shape 19: an order number before the grouped number",
+   "text": "tx-0001042 4111 1111 1111 1111",
+   "expect": "refused"
+  },
+  {
+   "id": "shape-lines",
+   "label": "review shape 20 (rebuilt): number, expiry and code on three lines",
+   "text": "4111 1111 1111 1111\n12/27\n123",
+   "expect": "refused"
+  },
+  {
+   "id": "phone-pair",
+   "label": "two US phone numbers side by side: 20 digits, no 13 to 19 digit span of groups passes Luhn",
+   "text": "713 555 0142 713 555 0199",
+   "expect": "allowed"
+  },
+  {
+   "id": "phone-uk-pair",
+   "label": "two UK phone numbers joined by a word: each run is under 13 digits",
+   "text": "+44 20 7946 0958 and +44 20 7946 0959",
+   "expect": "allowed"
+  },
+  {
+   "id": "amount-spaced",
+   "label": "an amount written with spaces: 13 digits, Luhn fails",
+   "text": "Total 1 234 567 890 123 USD",
+   "expect": "allowed"
+  },
+  {
+   "id": "dates-times-words",
+   "label": "date range and clock times with words between them: every run is short",
+   "text": "2026-11-01 to 2026-11-19, 14:05 to 15:30",
+   "expect": "allowed"
+  },
+  {
+   "id": "luhn-invalid-16-code",
+   "label": "16 digits that fail Luhn, then a 3 digit code: no span passes",
+   "text": "1234 5678 9012 3456 123",
+   "expect": "allowed"
+  },
+  {
+   "id": "luhn-invalid-16-expiry",
+   "label": "16 digits that fail Luhn, then an expiry: no span passes",
+   "text": "1234 5678 9012 3456 12 27",
+   "expect": "allowed"
+  },
+  {
+   "id": "record-id-tx",
+   "label": "a transaction id of the card pack: letters end every run",
+   "text": "tx-card-0000-0001",
+   "expect": "allowed"
+  },
+  {
+   "id": "record-id-list",
+   "label": "three transaction ids of the card pack in one line",
+   "text": "tx-card-0000-0001 tx-card-0000-0002 tx-card-0000-0003",
+   "expect": "allowed"
+  },
+  {
+   "id": "record-id-login",
+   "label": "a login id of the card pack: letters end every run, so no span is long enough",
+   "text": "login-acct-0000-0001",
+   "expect": "allowed"
+  },
+  {
+   "id": "record-id-generic",
+   "label": "two ids of a generated pack: letters end every run, so no span is long enough",
+   "text": "gen-tx-00465 gen-tx-00515",
+   "expect": "allowed"
+  },
+  {
+   "id": "unix-pair-ok",
+   "label": "two 13 digit Unix times side by side: 26 digits, no span of 13 to 19 passes Luhn",
+   "text": "1763556003600 1763556003601",
+   "expect": "allowed"
+  },
+  {
+   "id": "flipped-24-digits",
+   "label": "valid 16 digits then 8 more digits, one 24 digit group: a group of more than 19 digits is never judged",
+   "text": "411111111111111112345678",
+   "expect": "allowed",
+   "note": "The build's safety review flipped this vector from allowed to refused on 2026-11-19; the owner's narrowing of 2026-11-19 allows it again, and it is a stated limit.",
+   "limit": true
+  },
+  {
+   "id": "flipped-21-digits",
+   "label": "valid 16 digits, a space, 5 more digits: the first group passes alone",
+   "text": "4111111111111111 12345",
+   "expect": "refused",
+   "note": "The build's safety review flipped this vector from allowed to refused on 2026-11-19; the owner's narrowing of 2026-11-19 keeps it refused (its first group is a 16 digit Visa number)."
+  },
+  {
+   "id": "flipped-20-digits",
+   "label": "a 20 digit group whose first 19 digits pass Luhn (the luhn-19 vector): a group of more than 19 digits is never judged",
+   "text": "62000000000000000005",
+   "expect": "allowed",
+   "note": "The build's safety review flipped this vector from allowed to refused on 2026-11-19; the owner's narrowing of 2026-11-19 allows it again, and it is a stated limit.",
+   "limit": true
+  },
+  {
+   "id": "honest-two-unix-times",
+   "label": "two 13 digit Unix times in ms side by side: a 13 digit span passes Luhn but is no brand's number (the owner's narrowing of 2026-11-19 allows it; the strict rule refused it)",
+   "text": "1763556000000 1763559600000",
+   "expect": "allowed",
+   "note": "The owner's narrowing of 2026-11-19 allows this line; the strict rule built earlier the same day refused it."
+  },
+  {
+   "id": "honest-phone-then-date",
+   "label": "a phone number then a date: a span of 13 to 19 digits passes Luhn but is no brand's number (the owner's narrowing of 2026-11-19 allows it; the strict rule refused it)",
+   "text": "+1 713-555-0142 2026-11-19",
+   "expect": "allowed",
+   "note": "The owner's narrowing of 2026-11-19 allows this line; the strict rule built earlier the same day refused it."
+  },
+  {
+   "id": "honest-date-range-count",
+   "label": "a date range and a count (the owner's narrowing of 2026-11-19 allows it; the strict rule refused it)",
+   "text": "2026-11-04 2026-11-22 3",
+   "expect": "allowed",
+   "note": "The owner's narrowing of 2026-11-19 allows this line; the strict rule built earlier the same day refused it."
+  },
+  {
+   "id": "honest-dates-clocks-count",
+   "label": "two dates with two clocks and a count, separated by spaces (the owner's narrowing of 2026-11-19 allows it; the strict rule refused it)",
+   "text": "2026-11-02 01 07 11 2026-11-04 05 13 17 1",
+   "expect": "allowed",
+   "note": "The owner's narrowing of 2026-11-19 allows this line; the strict rule built earlier the same day refused it."
+  },
+  {
+   "id": "honest-small-counts",
+   "label": "a list of small counts written with spaces (the owner's narrowing of 2026-11-19 allows it; the strict rule refused it)",
+   "text": "5 52 124 284 388 12 4",
+   "expect": "allowed",
+   "note": "The owner's narrowing of 2026-11-19 allows this line; the strict rule built earlier the same day refused it."
+  },
+  {
+   "id": "honest-two-amounts",
+   "label": "two amounts written with spaced thousands (the owner's narrowing of 2026-11-19 allows it; the strict rule refused it)",
+   "text": "8 259 637 049 2 371 133",
+   "expect": "allowed",
+   "note": "The owner's narrowing of 2026-11-19 allows this line; the strict rule built earlier the same day refused it."
+  },
+  {
+   "id": "honest-record-ids-date-count",
+   "label": "two record ids of the card pack with a date and a count between them: the digits of the ids, the date and the count run together (the owner's narrowing of 2026-11-19 allows it; the strict rule refused it)",
+   "text": "tx-card-0000-0002 2026-11-19 1 tx-card-0000-0005",
+   "expect": "allowed",
+   "note": "The owner's narrowing of 2026-11-19 allows this line; the strict rule built earlier the same day refused it."
+  },
+  {
+   "id": "card-line-visa",
+   "label": "Visa: a published test number of 16 digits in 4-4-4-4, an expiry MM/YY and a 3 digit code beside it",
+   "text": "4111 1111 1111 1111 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "card-line-visa-13",
+   "label": "Visa: a published test number of 13 digits in 4-4-4-1, an expiry MM/YY and a 3 digit code beside it",
+   "text": "4222 2222 2222 2 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "card-line-mastercard",
+   "label": "Mastercard: a published test number of 16 digits in 4-4-4-4, an expiry MM/YY and a 3 digit code beside it",
+   "text": "5555 5555 5555 4444 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "card-line-mastercard-16",
+   "label": "Mastercard: a published test number of 16 digits in 4-4-4-4, an expiry MM/YY and a 3 digit code beside it",
+   "text": "2223 0000 4840 0011 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "card-line-american-express",
+   "label": "American Express: a published test number of 15 digits in 4-6-5, an expiry MM/YY and a 4 digit code beside it",
+   "text": "3782 822463 10005 12/27 1234",
+   "expect": "refused"
+  },
+  {
+   "id": "card-line-discover",
+   "label": "Discover: a published test number of 16 digits in 4-4-4-4, an expiry MM/YY and a 3 digit code beside it",
+   "text": "6011 1111 1111 1117 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "card-line-jcb",
+   "label": "JCB: a published test number of 16 digits in 4-4-4-4, an expiry MM/YY and a 3 digit code beside it",
+   "text": "3530 1113 3330 0000 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "card-line-diners-club",
+   "label": "Diners Club: a published test number of 14 digits in 4-6-4, an expiry MM/YY and a 3 digit code beside it",
+   "text": "3622 720627 1667 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "card-line-diners-club-16",
+   "label": "Diners Club: a published test number of 16 digits in 4-4-4-4, an expiry MM/YY and a 3 digit code beside it",
+   "text": "3056 9300 0902 0004 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "card-line-unionpay",
+   "label": "UnionPay: a published test number of 16 digits in 4-4-4-4, an expiry MM/YY and a 3 digit code beside it",
+   "text": "6200 0000 0000 0005 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "card-line-unionpay-19",
+   "label": "UnionPay: a published test number of 19 digits in 4-4-4-4-3, an expiry MM/YY and a 3 digit code beside it",
+   "text": "6205 5000 0000 0000 004 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "card-line-maestro",
+   "label": "Maestro: a published test number of 16 digits in 4-4-4-4, an expiry MM/YY and a 3 digit code beside it",
+   "text": "6304 0000 0000 0000 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-visa-4-first",
+   "label": "Visa, first prefix of the range 4: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "4111 1111 1111 1111 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-visa-4-below",
+   "label": "The prefix just below the Visa range 4 (3): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "3111 1111 1111 1113 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-visa-4-above",
+   "label": "The prefix just above the Visa range 4 (5): a 13 digit number that passes Luhn in 4-4-4-1, with an expiry and a code beside it; no row of the table holds it",
+   "text": "5111 1111 1111 8 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-mastercard-51-55-first",
+   "label": "Mastercard, first prefix of the range 51 to 55: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "5155 5555 5555 4448 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-mastercard-51-55-last",
+   "label": "Mastercard, last prefix of the range 51 to 55: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "5555 5555 5555 4444 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-mastercard-51-55-below",
+   "label": "The prefix just below the Mastercard range 51 to 55 (50): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "5055 5555 5555 4449 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-mastercard-51-55-above",
+   "label": "The prefix just above the Mastercard range 51 to 55 (56): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "5655 5555 5555 4443 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-mastercard-2221-2720-first",
+   "label": "Mastercard, first prefix of the range 2221 to 2720: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "2221 5555 5555 4445 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-mastercard-2221-2720-last",
+   "label": "Mastercard, last prefix of the range 2221 to 2720: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "2720 5555 5555 4441 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-mastercard-2221-2720-below",
+   "label": "The prefix just below the Mastercard range 2221 to 2720 (2220): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "2220 5555 5555 4446 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-mastercard-2221-2720-above",
+   "label": "The prefix just above the Mastercard range 2221 to 2720 (2721): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "2721 5555 5555 4440 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-american-express-34-first",
+   "label": "American Express, first prefix of the range 34: a 15 digit number in 4-6-5 with an expiry and a code beside it",
+   "text": "3482 822463 10002 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-american-express-34-below",
+   "label": "The prefix just below the American Express range 34 (33): a 15 digit number that passes Luhn in 4-6-5, with an expiry and a code beside it; no row of the table holds it",
+   "text": "3382 822463 10004 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-american-express-34-above",
+   "label": "The prefix just above the American Express range 34 (35): a 15 digit number that passes Luhn in 4-6-5, with an expiry and a code beside it; no row of the table holds it",
+   "text": "3582 822463 10009 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-american-express-37-first",
+   "label": "American Express, first prefix of the range 37: a 15 digit number in 4-6-5 with an expiry and a code beside it",
+   "text": "3782 822463 10005 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-american-express-37-below",
+   "label": "The prefix just below the American Express range 37 (36): a 13 digit number that passes Luhn in 4-4-4-1, with an expiry and a code beside it; no row of the table holds it",
+   "text": "3682 8224 6310 7 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-american-express-37-above",
+   "label": "The prefix just above the American Express range 37 (38): a 13 digit number that passes Luhn in 4-4-4-1, with an expiry and a code beside it; no row of the table holds it",
+   "text": "3882 8224 6310 3 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-discover-6011-first",
+   "label": "Discover, first prefix of the range 6011: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "6011 1111 1111 1117 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-discover-6011-below",
+   "label": "The prefix just below the Discover range 6011 (6010): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6010 1111 1111 1118 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-discover-6011-above",
+   "label": "The prefix just above the Discover range 6011 (6012): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6012 1111 1111 1116 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-discover-644-649-first",
+   "label": "Discover, first prefix of the range 644 to 649: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "6441 1111 1111 1117 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-discover-644-649-last",
+   "label": "Discover, last prefix of the range 644 to 649: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "6491 1111 1111 1116 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-discover-644-649-below",
+   "label": "The prefix just below the Discover range 644 to 649 (643): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6431 1111 1111 1119 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-discover-644-649-above",
+   "label": "The prefix just above the Discover range 644 to 649 (650): a 15 digit number that passes Luhn in 4-6-5, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6501 111111 11116 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-discover-65-first",
+   "label": "Discover, first prefix of the range 65: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "6511 1111 1111 1112 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-discover-65-below",
+   "label": "The prefix just below the Discover range 65 (64): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6411 1111 1111 1113 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-discover-65-above",
+   "label": "The prefix just above the Discover range 65 (66): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6611 1111 1111 1111 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-jcb-3528-3589-first",
+   "label": "JCB, first prefix of the range 3528 to 3589: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "3528 1113 3330 0004 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-jcb-3528-3589-last",
+   "label": "JCB, last prefix of the range 3528 to 3589: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "3589 1113 3330 0000 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-jcb-3528-3589-below",
+   "label": "The prefix just below the JCB range 3528 to 3589 (3527): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "3527 1113 3330 0005 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-jcb-3528-3589-above",
+   "label": "The prefix just above the JCB range 3528 to 3589 (3590): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "3590 1113 3330 0007 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-diners-club-300-305-first",
+   "label": "Diners Club, first prefix of the range 300 to 305: a 14 digit number in 4-6-4 with an expiry and a code beside it",
+   "text": "3002 720627 1667 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-diners-club-300-305-last",
+   "label": "Diners Club, last prefix of the range 300 to 305: a 14 digit number in 4-6-4 with an expiry and a code beside it",
+   "text": "3052 720627 1666 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-diners-club-300-305-below",
+   "label": "The prefix just below the Diners Club range 300 to 305 (299): a 14 digit number that passes Luhn in 4-6-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "2992 720627 1661 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-diners-club-300-305-above",
+   "label": "The prefix just above the Diners Club range 300 to 305 (306): a 14 digit number that passes Luhn in 4-6-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "3062 720627 1664 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-diners-club-36-first",
+   "label": "Diners Club, first prefix of the range 36: a 14 digit number in 4-6-4 with an expiry and a code beside it",
+   "text": "3622 720627 1667 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-diners-club-36-below",
+   "label": "The prefix just below the Diners Club range 36 (35): a 14 digit number that passes Luhn in 4-6-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "3522 720627 1668 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-diners-club-36-above",
+   "label": "The prefix just above the Diners Club range 36 (37): a 14 digit number that passes Luhn in 4-6-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "3722 720627 1666 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-diners-club-38-39-first",
+   "label": "Diners Club, first prefix of the range 38 to 39: a 14 digit number in 4-6-4 with an expiry and a code beside it",
+   "text": "3822 720627 1665 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-diners-club-38-39-last",
+   "label": "Diners Club, last prefix of the range 38 to 39: a 14 digit number in 4-6-4 with an expiry and a code beside it",
+   "text": "3922 720627 1664 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-diners-club-38-39-below",
+   "label": "The prefix just below the Diners Club range 38 to 39 (37): a 14 digit number that passes Luhn in 4-6-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "3722 720627 1666 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-diners-club-38-39-above",
+   "label": "The prefix just above the Diners Club range 38 to 39 (40): a 14 digit number that passes Luhn in 4-6-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "4022 720627 1661 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-unionpay-62-first",
+   "label": "UnionPay, first prefix of the range 62: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "6200 0000 0000 0005 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-unionpay-62-below",
+   "label": "The prefix just below the UnionPay range 62 (61): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6100 0000 0000 0006 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-unionpay-62-above",
+   "label": "The prefix just above the UnionPay range 62 (63): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6300 0000 0000 0004 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-5018-first",
+   "label": "Maestro, first prefix of the range 5018: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "5018 0000 0000 0009 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-maestro-5018-below",
+   "label": "The prefix just below the Maestro range 5018 (5017): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "5017 0000 0000 0000 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-5018-above",
+   "label": "The prefix just above the Maestro range 5018 (5019): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "5019 0000 0000 0008 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-5020-first",
+   "label": "Maestro, first prefix of the range 5020: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "5020 0000 0000 0005 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-maestro-5020-below",
+   "label": "The prefix just below the Maestro range 5020 (5019): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "5019 0000 0000 0008 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-5020-above",
+   "label": "The prefix just above the Maestro range 5020 (5021): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "5021 0000 0000 0004 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-5038-first",
+   "label": "Maestro, first prefix of the range 5038: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "5038 0000 0000 0005 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-maestro-5038-below",
+   "label": "The prefix just below the Maestro range 5038 (5037): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "5037 0000 0000 0006 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-5038-above",
+   "label": "The prefix just above the Maestro range 5038 (5039): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "5039 0000 0000 0004 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-5893-first",
+   "label": "Maestro, first prefix of the range 5893: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "5893 0000 0000 0009 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-maestro-5893-below",
+   "label": "The prefix just below the Maestro range 5893 (5892): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "5892 0000 0000 0000 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-5893-above",
+   "label": "The prefix just above the Maestro range 5893 (5894): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "5894 0000 0000 0008 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-6304-first",
+   "label": "Maestro, first prefix of the range 6304: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "6304 0000 0000 0000 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-maestro-6304-below",
+   "label": "The prefix just below the Maestro range 6304 (6303): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6303 0000 0000 0001 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-6304-above",
+   "label": "The prefix just above the Maestro range 6304 (6305): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6305 0000 0000 0009 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-6759-first",
+   "label": "Maestro, first prefix of the range 6759: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "6759 0000 0000 0000 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-maestro-6759-below",
+   "label": "The prefix just below the Maestro range 6759 (6758): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6758 0000 0000 0001 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-6759-above",
+   "label": "The prefix just above the Maestro range 6759 (6760): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6760 0000 0000 0007 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-6761-6763-first",
+   "label": "Maestro, first prefix of the range 6761 to 6763: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "6761 0000 0000 0006 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-maestro-6761-6763-last",
+   "label": "Maestro, last prefix of the range 6761 to 6763: a 16 digit number in 4-4-4-4 with an expiry and a code beside it",
+   "text": "6763 0000 0000 0004 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "brand-maestro-6761-6763-below",
+   "label": "The prefix just below the Maestro range 6761 to 6763 (6760): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6760 0000 0000 0007 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "brand-maestro-6761-6763-above",
+   "label": "The prefix just above the Maestro range 6761 to 6763 (6764): a 16 digit number that passes Luhn in 4-4-4-4, with an expiry and a code beside it; no row of the table holds it",
+   "text": "6764 0000 0000 0003 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "same-row-visa-prefix-15-digits",
+   "label": "a number that begins with the Visa prefix but has 15 digits (Visa has 13, 16 and 19), in 4-6-5 with an expiry and a code beside it: a prefix and a length of two different rows are not a number of one",
+   "text": "4111 111111 11116 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "same-row-amex-prefix-16-digits",
+   "label": "a number that begins with an American Express prefix but has 16 digits (American Express has 15), in 4-4-4-4 with an expiry and a code beside it: a prefix and a length of two different rows are not a number of one",
+   "text": "3482 8224 6310 0055 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "same-row-mastercard-prefix-15-digits",
+   "label": "a number that begins with a Mastercard prefix but has 15 digits (Mastercard has 16), in 4-6-5 with an expiry and a code beside it: a prefix and a length of two different rows are not a number of one",
+   "text": "5155 555555 55441 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "layout-pairs-of-2",
+   "label": "a Visa test number in pairs of 2, an expiry and a code beside it: a layout cards are not written in",
+   "text": "41 11 11 11 11 11 11 11 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "layout-groups-of-8",
+   "label": "a Visa test number in groups of 8, an expiry and a code beside it: one slip from a card's layout, refused since the owner's call of 2026-11-19 to cure the spacing slip",
+   "text": "41111111 11111111 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed this line, and the layout test now refuses it (a single group split in two)."
+  },
+  {
+   "id": "layout-first-digit-split",
+   "label": "a Visa test number with its first digit split off, an expiry and a code beside it: one slip from a card's layout, refused since the owner's call of 2026-11-19 to cure the spacing slip",
+   "text": "4 111111111111111 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed this line, and the layout test now refuses it (a single group split in two)."
+  },
+  {
+   "id": "layout-last-digit-split",
+   "label": "a Visa test number with its last digit split off, an expiry and a code beside it: one slip from a card's layout, refused since the owner's call of 2026-11-19 to cure the spacing slip",
+   "text": "411111111111111 1 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed this line, and the layout test now refuses it (a single group split in two)."
+  },
+  {
+   "id": "layout-fours-with-expiry",
+   "label": "the same Visa test number in 4-4-4-4 with an expiry and a code beside it: a layout cards are written in",
+   "text": "4111 1111 1111 1111 12/27 123",
+   "expect": "refused"
+  },
+  {
+   "id": "off-table-prefix-with-code",
+   "label": "a published test number whose prefix (5063) no row of the table holds, in 4-4-4-4 with an expiry and a code beside it",
+   "text": "5063 5169 4500 5047 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Allowed by the owner's narrowing of 2026-11-19, which accepted that a card line of this kind can pass; it is a stated limit."
+  },
+  {
+   "id": "limit-period",
+   "label": "groups split by full stops",
+   "text": "4111.1111.1111.1111",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "limit-slash",
+   "label": "groups split by slashes",
+   "text": "4111/1111/1111/1111",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "limit-underscore",
+   "label": "groups split by underscores",
+   "text": "4111_1111_1111_1111",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "limit-comma",
+   "label": "groups split by commas",
+   "text": "4111,1111,1111,1111",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "limit-colon",
+   "label": "groups split by colons",
+   "text": "4111:1111:1111:1111",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "limit-four-spaces",
+   "label": "groups split by four spaces",
+   "text": "4111    1111    1111    1111",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "limit-four-line-feeds",
+   "label": "groups split by three blank paragraphs (four line feeds)",
+   "text": "4111\n\n\n\n1111\n\n\n\n1111\n\n\n\n1111",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "limit-parenthesis",
+   "label": "first group in parentheses, the rest with spaces",
+   "text": "(4111) 1111 1111 1111",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "limit-reversed",
+   "label": "valid 16 digits written backwards",
+   "text": "1881888888882104",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "limit-words",
+   "label": "a number written in words",
+   "text": "four one one one one one one one one one one one one one one one",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "limit-letter-join",
+   "label": "valid 16 digits with a letter after each group",
+   "text": "4111x1111x1111x1111x",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "limit-run-on-code",
+   "label": "valid 16 digits with a 3 digit code written straight after it: one 19 digit group that fails Luhn (the group is 19 digits or fewer, so only the whole group is judged)",
+   "text": "4111111111111111123",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "limit-grouped-run-on-last",
+   "label": "valid 16 digits in groups of four with a 3 digit code written straight after the last group: that group has 7 digits and no span of whole groups passes",
+   "text": "4111 1111 1111 1111123",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "limit-grouped-run-on-first",
+   "label": "valid 16 digits in groups of four with 3 digits written straight before the first group: that group has 7 digits and no span of whole groups passes",
+   "text": "1234111 1111 1111 1111",
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "slip-visa-stray-space",
+   "label": "Visa: a published test number of 16 digits in groups of 4-4-4-3-1 (a stray extra space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "4111 1111 1111 111 1 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-visa-missing-space",
+   "label": "Visa: a published test number of 16 digits in groups of 8-4-4 (a missing space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "41111111 1111 1111 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-visa-moved-boundary",
+   "label": "Visa: a published test number of 16 digits in groups of 3-5-4-4 (one boundary moved by one digit), an expiry MM/YY and a 3 digit code beside it",
+   "text": "411 11111 1111 1111 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-visa-contiguous-one-space",
+   "label": "Visa: a published test number of 16 digits in groups of 6-10 (a contiguous number with one space in it), an expiry MM/YY and a 3 digit code beside it",
+   "text": "411111 1111111111 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "double-slip-visa",
+   "label": "Visa: a published test number of 16 digits in groups of 3-5-3-5 (two moved boundaries, two slips from a card's layout), an expiry MM/YY and a 3 digit code beside it",
+   "text": "411 11111 111 11111 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "A stated limit of the owner's call of 2026-11-19 to cure the spacing slip: two slips in one number are two slips from every card layout, so the layout test still allows the line. The number alone is refused by the original rule."
+  },
+  {
+   "id": "slip-mastercard-stray-space",
+   "label": "Mastercard: a published test number of 16 digits in groups of 4-4-4-3-1 (a stray extra space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "5555 5555 5555 444 4 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-mastercard-missing-space",
+   "label": "Mastercard: a published test number of 16 digits in groups of 8-4-4 (a missing space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "55555555 5555 4444 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-mastercard-moved-boundary",
+   "label": "Mastercard: a published test number of 16 digits in groups of 3-5-4-4 (one boundary moved by one digit), an expiry MM/YY and a 3 digit code beside it",
+   "text": "555 55555 5555 4444 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-mastercard-contiguous-one-space",
+   "label": "Mastercard: a published test number of 16 digits in groups of 6-10 (a contiguous number with one space in it), an expiry MM/YY and a 3 digit code beside it",
+   "text": "555555 5555554444 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "double-slip-mastercard",
+   "label": "Mastercard: a published test number of 16 digits in groups of 3-5-3-5 (two moved boundaries, two slips from a card's layout), an expiry MM/YY and a 3 digit code beside it",
+   "text": "555 55555 555 54444 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "A stated limit of the owner's call of 2026-11-19 to cure the spacing slip: two slips in one number are two slips from every card layout, so the layout test still allows the line. The number alone is refused by the original rule."
+  },
+  {
+   "id": "slip-american-express-stray-space",
+   "label": "American Express: a published test number of 15 digits in groups of 4-6-4-1 (a stray extra space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "3782 822463 1000 5 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-american-express-missing-space",
+   "label": "American Express: a published test number of 15 digits in groups of 10-5 (a missing space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "3782822463 10005 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-american-express-moved-boundary",
+   "label": "American Express: a published test number of 15 digits in groups of 4-5-6 (one boundary moved by one digit), an expiry MM/YY and a 3 digit code beside it",
+   "text": "3782 82246 310005 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-american-express-contiguous-one-space",
+   "label": "American Express: a published test number of 15 digits in groups of 7-8 (a contiguous number with one space in it), an expiry MM/YY and a 3 digit code beside it",
+   "text": "3782822 46310005 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "double-slip-american-express",
+   "label": "American Express: a published test number of 15 digits in groups of 3-6-6 (two moved boundaries, two slips from a card's layout), an expiry MM/YY and a 3 digit code beside it",
+   "text": "378 282246 310005 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "A stated limit of the owner's call of 2026-11-19 to cure the spacing slip: two slips in one number are two slips from every card layout, so the layout test still allows the line. The number alone is refused by the original rule."
+  },
+  {
+   "id": "slip-discover-stray-space",
+   "label": "Discover: a published test number of 16 digits in groups of 4-4-4-3-1 (a stray extra space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "6011 1111 1111 111 7 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-discover-missing-space",
+   "label": "Discover: a published test number of 16 digits in groups of 8-4-4 (a missing space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "60111111 1111 1117 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-discover-moved-boundary",
+   "label": "Discover: a published test number of 16 digits in groups of 3-5-4-4 (one boundary moved by one digit), an expiry MM/YY and a 3 digit code beside it",
+   "text": "601 11111 1111 1117 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-discover-contiguous-one-space",
+   "label": "Discover: a published test number of 16 digits in groups of 6-10 (a contiguous number with one space in it), an expiry MM/YY and a 3 digit code beside it",
+   "text": "601111 1111111117 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "double-slip-discover",
+   "label": "Discover: a published test number of 16 digits in groups of 3-5-3-5 (two moved boundaries, two slips from a card's layout), an expiry MM/YY and a 3 digit code beside it",
+   "text": "601 11111 111 11117 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "A stated limit of the owner's call of 2026-11-19 to cure the spacing slip: two slips in one number are two slips from every card layout, so the layout test still allows the line. The number alone is refused by the original rule."
+  },
+  {
+   "id": "slip-jcb-stray-space",
+   "label": "JCB: a published test number of 16 digits in groups of 4-4-4-3-1 (a stray extra space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "3530 1113 3330 000 0 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-jcb-missing-space",
+   "label": "JCB: a published test number of 16 digits in groups of 8-4-4 (a missing space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "35301113 3330 0000 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-jcb-moved-boundary",
+   "label": "JCB: a published test number of 16 digits in groups of 3-5-4-4 (one boundary moved by one digit), an expiry MM/YY and a 3 digit code beside it",
+   "text": "353 01113 3330 0000 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-jcb-contiguous-one-space",
+   "label": "JCB: a published test number of 16 digits in groups of 6-10 (a contiguous number with one space in it), an expiry MM/YY and a 3 digit code beside it",
+   "text": "353011 1333300000 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "double-slip-jcb",
+   "label": "JCB: a published test number of 16 digits in groups of 3-5-3-5 (two moved boundaries, two slips from a card's layout), an expiry MM/YY and a 3 digit code beside it",
+   "text": "353 01113 333 00000 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "A stated limit of the owner's call of 2026-11-19 to cure the spacing slip: two slips in one number are two slips from every card layout, so the layout test still allows the line. The number alone is refused by the original rule."
+  },
+  {
+   "id": "slip-diners-club-stray-space",
+   "label": "Diners Club: a published test number of 14 digits in groups of 4-6-3-1 (a stray extra space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "3622 720627 166 7 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-diners-club-missing-space",
+   "label": "Diners Club: a published test number of 14 digits in groups of 10-4 (a missing space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "3622720627 1667 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-diners-club-moved-boundary",
+   "label": "Diners Club: a published test number of 14 digits in groups of 4-5-5 (one boundary moved by one digit), an expiry MM/YY and a 3 digit code beside it",
+   "text": "3622 72062 71667 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-diners-club-contiguous-one-space",
+   "label": "Diners Club: a published test number of 14 digits in groups of 6-8 (a contiguous number with one space in it), an expiry MM/YY and a 3 digit code beside it",
+   "text": "362272 06271667 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "double-slip-diners-club",
+   "label": "Diners Club: a published test number of 14 digits in groups of 3-6-5 (two moved boundaries, two slips from a card's layout), an expiry MM/YY and a 3 digit code beside it",
+   "text": "362 272062 71667 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "A stated limit of the owner's call of 2026-11-19 to cure the spacing slip: two slips in one number are two slips from every card layout, so the layout test still allows the line. The number alone is refused by the original rule."
+  },
+  {
+   "id": "slip-unionpay-stray-space",
+   "label": "UnionPay: a published test number of 19 digits in groups of 4-4-4-4-2-1 (a stray extra space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "6205 5000 0000 0000 00 4 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-unionpay-missing-space",
+   "label": "UnionPay: a published test number of 19 digits in groups of 8-4-4-3 (a missing space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "62055000 0000 0000 004 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-unionpay-moved-boundary",
+   "label": "UnionPay: a published test number of 19 digits in groups of 3-5-4-4-3 (one boundary moved by one digit), an expiry MM/YY and a 3 digit code beside it",
+   "text": "620 55000 0000 0000 004 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-unionpay-contiguous-one-space",
+   "label": "UnionPay: a published test number of 19 digits in groups of 6-13 (a contiguous number with one space in it), an expiry MM/YY and a 3 digit code beside it",
+   "text": "620550 0000000000004 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "double-slip-unionpay",
+   "label": "UnionPay: a published test number of 19 digits in groups of 3-5-4-3-4 (two moved boundaries, two slips from a card's layout), an expiry MM/YY and a 3 digit code beside it",
+   "text": "620 55000 0000 000 0004 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "A stated limit of the owner's call of 2026-11-19 to cure the spacing slip: two slips in one number are two slips from every card layout, so the layout test still allows the line. The number alone is refused by the original rule."
+  },
+  {
+   "id": "slip-maestro-stray-space",
+   "label": "Maestro: a published test number of 16 digits in groups of 1-3-4-4-4 (a stray extra space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "6 304 0000 0000 0000 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-maestro-missing-space",
+   "label": "Maestro: a published test number of 16 digits in groups of 8-4-4 (a missing space), an expiry MM/YY and a 3 digit code beside it",
+   "text": "63040000 0000 0000 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-maestro-moved-boundary",
+   "label": "Maestro: a published test number of 16 digits in groups of 3-5-4-4 (one boundary moved by one digit), an expiry MM/YY and a 3 digit code beside it",
+   "text": "630 40000 0000 0000 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "slip-maestro-contiguous-one-space",
+   "label": "Maestro: a published test number of 16 digits in groups of 6-10 (a contiguous number with one space in it), an expiry MM/YY and a 3 digit code beside it",
+   "text": "630400 0000000000 12/27 123",
+   "expect": "refused",
+   "note": "The owner's call of 2026-11-19 cures the spacing slip: the narrowed rule of the same day allowed a card number with one slip in its spacing and an expiry and a code beside it, and the layout test now refuses it."
+  },
+  {
+   "id": "double-slip-maestro",
+   "label": "Maestro: a published test number of 16 digits in groups of 3-5-3-5 (two moved boundaries, two slips from a card's layout), an expiry MM/YY and a 3 digit code beside it",
+   "text": "630 40000 000 00000 12/27 123",
+   "expect": "allowed",
+   "limit": true,
+   "note": "A stated limit of the owner's call of 2026-11-19 to cure the spacing slip: two slips in one number are two slips from every card layout, so the layout test still allows the line. The number alone is refused by the original rule."
+  },
+  {
+   "id": "white-vertical-tab-alone",
+   "label": "valid 16 digits in four groups of four, split by a vertical tab (U+000B), alone",
+   "text": "4111\u000b1111\u000b1111\u000b1111",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-vertical-tab-expiry",
+   "label": "the same number split by a vertical tab (U+000B), with an expiry beside it",
+   "text": "4111\u000b1111\u000b1111\u000b1111 12/27",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-form-feed-alone",
+   "label": "valid 16 digits in four groups of four, split by a form feed (U+000C), alone",
+   "text": "4111\f1111\f1111\f1111",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-form-feed-expiry",
+   "label": "the same number split by a form feed (U+000C), with an expiry beside it",
+   "text": "4111\f1111\f1111\f1111 12/27",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-next-line-alone",
+   "label": "valid 16 digits in four groups of four, split by a next line (U+0085), alone",
+   "text": "4111\u00851111\u00851111\u00851111",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-next-line-expiry",
+   "label": "the same number split by a next line (U+0085), with an expiry beside it",
+   "text": "4111\u00851111\u00851111\u00851111 12/27",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-line-separator-alone",
+   "label": "valid 16 digits in four groups of four, split by a line separator (U+2028), alone",
+   "text": "4111\u20281111\u20281111\u20281111",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-line-separator-expiry",
+   "label": "the same number split by a line separator (U+2028), with an expiry beside it",
+   "text": "4111\u20281111\u20281111\u20281111 12/27",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-paragraph-separator-alone",
+   "label": "valid 16 digits in four groups of four, split by a paragraph separator (U+2029), alone",
+   "text": "4111\u20291111\u20291111\u20291111",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-paragraph-separator-expiry",
+   "label": "the same number split by a paragraph separator (U+2029), with an expiry beside it",
+   "text": "4111\u20291111\u20291111\u20291111 12/27",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-ogham-space-alone",
+   "label": "valid 16 digits in four groups of four, split by a Ogham space mark (U+1680), alone",
+   "text": "4111\u16801111\u16801111\u16801111",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-ogham-space-expiry",
+   "label": "the same number split by a Ogham space mark (U+1680), with an expiry beside it",
+   "text": "4111\u16801111\u16801111\u16801111 12/27",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-mix-three-in-a-row",
+   "label": "a plain space, then a line separator, then a form feed between two groups: three separators still join the run",
+   "text": "4111 \u2028\f1111 1111 1111",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-mix-successive",
+   "label": "a plain space, a line separator and a form feed between successive groups",
+   "text": "4111 1111\u20281111\f1111",
+   "expect": "refused",
+   "note": "The owner's cure of 2026-11-19: every character with the Unicode property White_Space is a separator. Before it, this character ended the run and the number passed even alone."
+  },
+  {
+   "id": "white-four-line-separators",
+   "label": "valid 16 digits in two halves with four line separators between them: four separators in a row end the run, whatever they are",
+   "text": "41111111\u2028\u2028\u2028\u202811111111",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Still the four separator limit after the cure of 2026-11-19: the halves are two runs of 8 digits."
+  },
+  {
+   "id": "white-four-mixed-white-space",
+   "label": "valid 16 digits in two halves with a vertical tab, a form feed, a next line and an Ogham space mark between them: four separators in a row, in a mix",
+   "text": "41111111\u000b\f\u0085\u168011111111",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Still the four separator limit after the cure of 2026-11-19, whatever the mix."
+  },
+  {
+   "id": "white-honest-two-counts",
+   "label": "two short counts with a line separator between them: no run holds 13 digits, so the new separator refuses nothing honest here",
+   "text": "12\u2028345",
+   "expect": "allowed",
+   "note": "A line separator joins digits into a run like any separator; two small counts stay far below 13 digits (2026-11-19)."
+  }
+ ],
+ "separator_vectors": {
+  "_about": "The separator characters of the card number guard as code points, after NFKC. Every character with the Unicode property White_Space is a separator (the owner asked for it on 2026-11-19); the hyphen-minus, U+2010 to U+2015 and the minus sign are separators too. code_points is the exact set both guards hold; added_2026_11_19 is the six that were missing; white_space_members is the property's 25 members, each of which is in code_points or is turned into a plain space by NFKC.",
+  "code_points": [
+   9,
+   10,
+   11,
+   12,
+   13,
+   32,
+   45,
+   133,
+   160,
+   5760,
+   8208,
+   8209,
+   8210,
+   8211,
+   8212,
+   8213,
+   8232,
+   8233,
+   8722
+  ],
+  "added_2026_11_19": [
+   11,
+   12,
+   133,
+   5760,
+   8232,
+   8233
+  ],
+  "white_space_members": [
+   9,
+   10,
+   11,
+   12,
+   13,
+   32,
+   133,
+   160,
+   5760,
+   8192,
+   8193,
+   8194,
+   8195,
+   8196,
+   8197,
+   8198,
+   8199,
+   8200,
+   8201,
+   8202,
+   8232,
+   8233,
+   8239,
+   8287,
+   12288
+  ]
+ },
+ "multi_vectors": [
+  {
+   "id": "limit-two-notes",
+   "label": "valid 16 digits split across two notes",
+   "texts": [
+    "4111 1111",
+    "1111 1111"
+   ],
+   "expect": "allowed",
+   "limit": true
+  }
+ ],
+ "body_vectors": [
+  {
+   "id": "marks-split",
+   "label": "one number split across bold and plain text",
+   "body": {
+    "v": 1,
+    "content": [
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "4111 11",
+        "marks": [
+         {
+          "type": "bold"
+         }
+        ]
+       },
+       {
+        "type": "text",
+        "text": "11 1111 1111"
+       }
+      ]
+     }
+    ]
+   },
+   "expect": "refused"
+  },
+  {
+   "id": "marks-three",
+   "label": "one number split across three marked runs",
+   "body": {
+    "v": 1,
+    "content": [
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "4111",
+        "marks": [
+         {
+          "type": "italic"
+         }
+        ]
+       },
+       {
+        "type": "text",
+        "text": " 1111 ",
+        "marks": [
+         {
+          "type": "underline"
+         },
+         {
+          "type": "strike"
+         }
+        ]
+       },
+       {
+        "type": "text",
+        "text": "1111 1111"
+       }
+      ]
+     }
+    ]
+   },
+   "expect": "refused"
+  },
+  {
+   "id": "two-paragraphs",
+   "label": "groups in two adjacent paragraphs (one line feed)",
+   "body": {
+    "v": 1,
+    "content": [
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "4111 1111 1111"
+       }
+      ]
+     },
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "1111"
+       }
+      ]
+     }
+    ]
+   },
+   "expect": "refused"
+  },
+  {
+   "id": "hard-break",
+   "label": "groups split by a hard break",
+   "body": {
+    "v": 1,
+    "content": [
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "4111 1111"
+       },
+       {
+        "type": "hard_break"
+       },
+       {
+        "type": "text",
+        "text": "1111 1111"
+       }
+      ]
+     }
+    ]
+   },
+   "expect": "refused"
+  },
+  {
+   "id": "bullet-items",
+   "label": "groups in two list items",
+   "body": {
+    "v": 1,
+    "content": [
+     {
+      "type": "bullet_list",
+      "content": [
+       {
+        "type": "list_item",
+        "content": [
+         {
+          "type": "paragraph",
+          "content": [
+           {
+            "type": "text",
+            "text": "4111 1111"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "type": "list_item",
+        "content": [
+         {
+          "type": "paragraph",
+          "content": [
+           {
+            "type": "text",
+            "text": "1111 1111"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   "expect": "refused"
+  },
+  {
+   "id": "ordered-quote",
+   "label": "groups in a list and a quote",
+   "body": {
+    "v": 1,
+    "content": [
+     {
+      "type": "ordered_list",
+      "content": [
+       {
+        "type": "list_item",
+        "content": [
+         {
+          "type": "paragraph",
+          "content": [
+           {
+            "type": "text",
+            "text": "4111 1111 1111"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "type": "quote",
+      "content": [
+       {
+        "type": "paragraph",
+        "content": [
+         {
+          "type": "text",
+          "text": "1111"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   "expect": "refused"
+  },
+  {
+   "id": "card-expiry-code-paragraphs",
+   "label": "the number, its expiry and its code in three paragraphs (review shape 20 as a body)",
+   "body": {
+    "v": 1,
+    "content": [
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "4111 1111 1111 1111"
+       }
+      ]
+     },
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "12/27"
+       }
+      ]
+     },
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "123"
+       }
+      ]
+     }
+    ]
+   },
+   "expect": "refused"
+  },
+  {
+   "id": "three-blank-paragraphs",
+   "label": "groups split by three empty paragraphs (four line feeds)",
+   "body": {
+    "v": 1,
+    "content": [
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "4111 1111"
+       }
+      ]
+     },
+     {
+      "type": "paragraph"
+     },
+     {
+      "type": "paragraph"
+     },
+     {
+      "type": "paragraph"
+     },
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "1111 1111"
+       }
+      ]
+     }
+    ]
+   },
+   "expect": "allowed",
+   "limit": true
+  },
+  {
+   "id": "two-blank-paragraphs",
+   "label": "groups split by two empty paragraphs (three line feeds)",
+   "body": {
+    "v": 1,
+    "content": [
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "4111 1111"
+       }
+      ]
+     },
+     {
+      "type": "paragraph"
+     },
+     {
+      "type": "paragraph"
+     },
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "1111 1111"
+       }
+      ]
+     }
+    ]
+   },
+   "expect": "refused"
+  },
+  {
+   "id": "clean",
+   "label": "an ordinary note",
+   "body": {
+    "v": 1,
+    "content": [
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "Seen at the terminal, 2026-11-19 12:27.",
+        "marks": [
+         {
+          "type": "bold"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "type": "paragraph",
+      "content": [
+       {
+        "type": "text",
+        "text": "Follow up."
+       }
+      ]
+     }
+    ]
+   },
+   "expect": "allowed"
+  },
+  {
+   "id": "empty-doc",
+   "label": "no blocks",
+   "body": {
+    "v": 1,
+    "content": []
+   },
+   "expect": "allowed"
+  }
+ ],
+ "id_vectors": [
+  {
+   "id": "id-crafted",
+   "label": "a note id that holds a valid 16 digit number",
+   "value": "note-4111111111111111abcdefabcdefabcd",
+   "expect": "refused"
+  },
+  {
+   "id": "id-crafted-split",
+   "label": "a note id that holds a valid number split by hyphens",
+   "value": "note-4111-1111-1111-1111abcdefabcd",
+   "expect": "refused"
+  },
+  {
+   "id": "id-crafted-run-on",
+   "label": "a note id with 4 digits run on before a valid 16 digit number: a 20 digit group, never judged",
+   "value": "note-01234111111111111111abcdefabcdef",
+   "expect": "allowed",
+   "limit": true,
+   "note": "Refused by the strict rule built on 2026-11-19; allowed again by the owner's narrowing of 2026-11-19, and it is a stated limit."
+  },
+  {
+   "id": "id-ordinary",
+   "label": "an ordinary note id",
+   "value": "note-0123456789abcdef0123456789abcdef",
+   "expect": "allowed"
+  },
+  {
+   "id": "id-letters",
+   "label": "a note id of letters",
+   "value": "note-abcdefabcdefabcdefabcdefabcdefab",
+   "expect": "allowed"
+  },
+  {
+   "id": "link-id-ok",
+   "label": "a record id",
+   "value": "tx-0001042",
+   "expect": "allowed"
+  },
+  {
+   "id": "link-id-card",
+   "label": "a record id that holds a card number",
+   "value": "tx-4111111111111111",
+   "expect": "refused"
+  }
+ ],
+ "layout_vectors": {
+  "_about": "The accepted layouts of the layout test (the owner's call of 2026-11-19 to cure the spacing slip), by total digits: a card's layout (one group; every group 4 digits but the last, which holds 1 to 4; 4-6-5; 4-6-4), or a card's layout of the same total with one slip: one group split in two, two neighbouring groups joined, or the boundary of two neighbouring groups moved by one digit. Both guards must list exactly these, in the counts of the lengths 13 to 19, and must reject the layouts under rejected (two slips, or further from a card's layout).",
+  "counts": {
+   "13": 31,
+   "14": 50,
+   "15": 53,
+   "16": 38,
+   "17": 41,
+   "18": 44,
+   "19": 46
+  },
+  "accepted": {
+   "13": [
+    "1-3-4-4-1",
+    "1-12",
+    "2-2-4-4-1",
+    "2-11",
+    "3-1-4-4-1",
+    "3-5-4-1",
+    "3-10",
+    "4-1-3-4-1",
+    "4-2-2-4-1",
+    "4-3-1-4-1",
+    "4-3-5-1",
+    "4-4-1-3-1",
+    "4-4-2-2-1",
+    "4-4-3-1-1",
+    "4-4-3-2",
+    "4-4-4-1",
+    "4-4-5",
+    "4-5-3-1",
+    "4-8-1",
+    "4-9",
+    "5-3-4-1",
+    "5-8",
+    "6-7",
+    "7-6",
+    "8-4-1",
+    "8-5",
+    "9-4",
+    "10-3",
+    "11-2",
+    "12-1",
+    "13"
+   ],
+   "14": [
+    "1-3-4-4-2",
+    "1-3-6-4",
+    "1-13",
+    "2-2-4-4-2",
+    "2-2-6-4",
+    "2-12",
+    "3-1-4-4-2",
+    "3-1-6-4",
+    "3-5-4-2",
+    "3-7-4",
+    "3-11",
+    "4-1-3-4-2",
+    "4-1-5-4",
+    "4-2-2-4-2",
+    "4-2-4-4",
+    "4-3-1-4-2",
+    "4-3-3-4",
+    "4-3-5-2",
+    "4-4-1-3-2",
+    "4-4-2-2-2",
+    "4-4-2-4",
+    "4-4-3-1-2",
+    "4-4-3-3",
+    "4-4-4-1-1",
+    "4-4-4-2",
+    "4-4-5-1",
+    "4-4-6",
+    "4-5-1-4",
+    "4-5-3-2",
+    "4-5-5",
+    "4-6-1-3",
+    "4-6-2-2",
+    "4-6-3-1",
+    "4-6-4",
+    "4-7-3",
+    "4-8-2",
+    "4-10",
+    "5-3-4-2",
+    "5-5-4",
+    "5-9",
+    "6-8",
+    "7-7",
+    "8-4-2",
+    "8-6",
+    "9-5",
+    "10-4",
+    "11-3",
+    "12-2",
+    "13-1",
+    "14"
+   ],
+   "15": [
+    "1-3-4-4-3",
+    "1-3-6-5",
+    "1-14",
+    "2-2-4-4-3",
+    "2-2-6-5",
+    "2-13",
+    "3-1-4-4-3",
+    "3-1-6-5",
+    "3-5-4-3",
+    "3-7-5",
+    "3-12",
+    "4-1-3-4-3",
+    "4-1-5-5",
+    "4-2-2-4-3",
+    "4-2-4-5",
+    "4-3-1-4-3",
+    "4-3-3-5",
+    "4-3-5-3",
+    "4-4-1-3-3",
+    "4-4-2-2-3",
+    "4-4-2-5",
+    "4-4-3-1-3",
+    "4-4-3-4",
+    "4-4-4-1-2",
+    "4-4-4-2-1",
+    "4-4-4-3",
+    "4-4-5-2",
+    "4-4-7",
+    "4-5-1-5",
+    "4-5-3-3",
+    "4-5-6",
+    "4-6-1-4",
+    "4-6-2-3",
+    "4-6-3-2",
+    "4-6-4-1",
+    "4-6-5",
+    "4-7-4",
+    "4-8-3",
+    "4-11",
+    "5-3-4-3",
+    "5-5-5",
+    "5-10",
+    "6-9",
+    "7-8",
+    "8-4-3",
+    "8-7",
+    "9-6",
+    "10-5",
+    "11-4",
+    "12-3",
+    "13-2",
+    "14-1",
+    "15"
+   ],
+   "16": [
+    "1-3-4-4-4",
+    "1-15",
+    "2-2-4-4-4",
+    "2-14",
+    "3-1-4-4-4",
+    "3-5-4-4",
+    "3-13",
+    "4-1-3-4-4",
+    "4-2-2-4-4",
+    "4-3-1-4-4",
+    "4-3-5-4",
+    "4-4-1-3-4",
+    "4-4-2-2-4",
+    "4-4-3-1-4",
+    "4-4-3-5",
+    "4-4-4-1-3",
+    "4-4-4-2-2",
+    "4-4-4-3-1",
+    "4-4-4-4",
+    "4-4-5-3",
+    "4-4-8",
+    "4-5-3-4",
+    "4-8-4",
+    "4-12",
+    "5-3-4-4",
+    "5-11",
+    "6-10",
+    "7-9",
+    "8-4-4",
+    "8-8",
+    "9-7",
+    "10-6",
+    "11-5",
+    "12-4",
+    "13-3",
+    "14-2",
+    "15-1",
+    "16"
+   ],
+   "17": [
+    "1-3-4-4-4-1",
+    "1-16",
+    "2-2-4-4-4-1",
+    "2-15",
+    "3-1-4-4-4-1",
+    "3-5-4-4-1",
+    "3-14",
+    "4-1-3-4-4-1",
+    "4-2-2-4-4-1",
+    "4-3-1-4-4-1",
+    "4-3-5-4-1",
+    "4-4-1-3-4-1",
+    "4-4-2-2-4-1",
+    "4-4-3-1-4-1",
+    "4-4-3-5-1",
+    "4-4-4-1-3-1",
+    "4-4-4-2-2-1",
+    "4-4-4-3-1-1",
+    "4-4-4-3-2",
+    "4-4-4-4-1",
+    "4-4-4-5",
+    "4-4-5-3-1",
+    "4-4-8-1",
+    "4-5-3-4-1",
+    "4-8-4-1",
+    "4-13",
+    "5-3-4-4-1",
+    "5-12",
+    "6-11",
+    "7-10",
+    "8-4-4-1",
+    "8-9",
+    "9-8",
+    "10-7",
+    "11-6",
+    "12-5",
+    "13-4",
+    "14-3",
+    "15-2",
+    "16-1",
+    "17"
+   ],
+   "18": [
+    "1-3-4-4-4-2",
+    "1-17",
+    "2-2-4-4-4-2",
+    "2-16",
+    "3-1-4-4-4-2",
+    "3-5-4-4-2",
+    "3-15",
+    "4-1-3-4-4-2",
+    "4-2-2-4-4-2",
+    "4-3-1-4-4-2",
+    "4-3-5-4-2",
+    "4-4-1-3-4-2",
+    "4-4-2-2-4-2",
+    "4-4-3-1-4-2",
+    "4-4-3-5-2",
+    "4-4-4-1-3-2",
+    "4-4-4-2-2-2",
+    "4-4-4-3-1-2",
+    "4-4-4-3-3",
+    "4-4-4-4-1-1",
+    "4-4-4-4-2",
+    "4-4-4-5-1",
+    "4-4-4-6",
+    "4-4-5-3-2",
+    "4-4-8-2",
+    "4-5-3-4-2",
+    "4-8-4-2",
+    "4-14",
+    "5-3-4-4-2",
+    "5-13",
+    "6-12",
+    "7-11",
+    "8-4-4-2",
+    "8-10",
+    "9-9",
+    "10-8",
+    "11-7",
+    "12-6",
+    "13-5",
+    "14-4",
+    "15-3",
+    "16-2",
+    "17-1",
+    "18"
+   ],
+   "19": [
+    "1-3-4-4-4-3",
+    "1-18",
+    "2-2-4-4-4-3",
+    "2-17",
+    "3-1-4-4-4-3",
+    "3-5-4-4-3",
+    "3-16",
+    "4-1-3-4-4-3",
+    "4-2-2-4-4-3",
+    "4-3-1-4-4-3",
+    "4-3-5-4-3",
+    "4-4-1-3-4-3",
+    "4-4-2-2-4-3",
+    "4-4-3-1-4-3",
+    "4-4-3-5-3",
+    "4-4-4-1-3-3",
+    "4-4-4-2-2-3",
+    "4-4-4-3-1-3",
+    "4-4-4-3-4",
+    "4-4-4-4-1-2",
+    "4-4-4-4-2-1",
+    "4-4-4-4-3",
+    "4-4-4-5-2",
+    "4-4-4-7",
+    "4-4-5-3-3",
+    "4-4-8-3",
+    "4-5-3-4-3",
+    "4-8-4-3",
+    "4-15",
+    "5-3-4-4-3",
+    "5-14",
+    "6-13",
+    "7-12",
+    "8-4-4-3",
+    "8-11",
+    "9-10",
+    "10-9",
+    "11-8",
+    "12-7",
+    "13-6",
+    "14-5",
+    "15-4",
+    "16-3",
+    "17-2",
+    "18-1",
+    "19"
+   ]
+  },
+  "rejected": [
+   [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   [
+    3,
+    4,
+    4,
+    5
+   ],
+   [
+    4,
+    6,
+    6
+   ],
+   [
+    3,
+    5,
+    3,
+    5
+   ],
+   [
+    3,
+    6,
+    6
+   ],
+   [
+    3,
+    6,
+    5
+   ]
+  ]
+ }
+}

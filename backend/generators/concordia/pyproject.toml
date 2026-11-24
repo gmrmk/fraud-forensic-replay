@@ -1,0 +1,31 @@
+# Local tool config for the generator's isolated craft gate (check.ps1).
+# This file must exist at the generator root: black discovers config by walking UP
+# (it would otherwise inherit backend/pyproject.toml's extend-exclude='/generators/'
+# and check zero files - see docs/fixes/FIX-2026-06-09-concordia-gate-black-checked-
+# zero-files.md), mypy reads config only from the CWD, and a local ruff section pins
+# the gate against parent-config drift. sim/ + cli.py stay excluded from ruff/mypy
+# via check.ps1's CLI flags (concordia imports); black + pytest cover the whole tree.
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv", "_out"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+extend-exclude = '/(\.venv|_out)/'
+
+[tool.mypy]
+python_version = "3.12"
+warn_redundant_casts = true
+warn_unused_ignores = true
+check_untyped_defs = true
+ignore_missing_imports = true
+exclude = '(^|/)(\.venv|_out)/'

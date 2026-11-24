@@ -1,0 +1,21 @@
+[
+ {
+  "id": "dec-01",
+  "org_id": "org-49c25",
+  "event_ids": [
+   "pd-03",
+   "nt-01",
+   "fc-01",
+   "fc-02",
+   "fc-03"
+  ],
+  "target_label": "Larkmoor Group",
+  "status": "WAITING",
+  "outcome": "FOR REVIEW",
+  "note": "Daily requests held between 25,640 and 26,820 for 7 days, then read 83,810, 129,660 and 29,700. Failed calls on 3 days: 142, 417 and 99, 658 in all. One notice at 9 Nov 18:05 UTC, delivery bounced. 4 workspaces, 1 with an exemption on file. Times are UTC.",
+  "decided_by": "investigator",
+  "decided_at": "2026-11-11T14:30:00+00:00",
+  "lat": 40.7608,
+  "lng": -111.891
+ }
+]

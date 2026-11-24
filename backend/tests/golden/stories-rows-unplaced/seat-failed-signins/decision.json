@@ -1,0 +1,18 @@
+[
+ {
+  "id": "dc-0001",
+  "seat_id": "seat-69701",
+  "event_ids": [
+   "sg-0002",
+   "ce-0001"
+  ],
+  "target_label": "lun-kes",
+  "status": "WAITING",
+  "outcome": "FOR REVIEW",
+  "note": "14 failed sign-ins on the hosting network inside 15 minutes, then 1 sign-in and 1 credential grant with a lifetime of 720 hours. 3 limit resets in 67 minutes. 1,722 requests in the busiest hour, against 144 on kes-fen in the same hour.",
+  "decided_by": "investigator",
+  "decided_at": "2026-11-11T14:00:00+00:00",
+  "lat": 47.6062,
+  "lng": -122.3321
+ }
+]

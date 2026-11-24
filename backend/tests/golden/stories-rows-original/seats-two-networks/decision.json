@@ -1,0 +1,17 @@
+[
+ {
+  "id": "dc-01",
+  "org_id": "org-65290",
+  "event_ids": [
+   "sw-01",
+   "rs-01",
+   "rs-02"
+  ],
+  "target_label": "Dormere Water Utility",
+  "status": "WAITING",
+  "outcome": "FOR REVIEW",
+  "note": "5 seats in 3 organisations. 14 network changes counted on 2 seats. 2 resets on one day. 32 safeguard events in 6 hours. 1,122 requests in 7 days. 5 of 6 tier cells hold no enrolment record.",
+  "decided_by": "investigator",
+  "decided_at": "2026-11-11T04:24:00+00:00"
+ }
+]

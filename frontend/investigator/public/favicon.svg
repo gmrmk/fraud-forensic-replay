@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- This project's own mark: a globe outline, one meridian, one event. -->
+  <rect width="32" height="32" rx="6" fill="#0B0E13"/>
+  <circle cx="16" cy="16" r="9.5" fill="none" stroke="#00E5FF" stroke-width="2"/>
+  <ellipse cx="16" cy="16" rx="4" ry="9.5" fill="none" stroke="#00E5FF" stroke-width="1.5"/>
+  <circle cx="22" cy="11" r="2.6" fill="#FF7A1A"/>
+</svg>

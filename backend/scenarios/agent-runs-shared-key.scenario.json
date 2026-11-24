@@ -1,0 +1,83 @@
+{
+  "id": "agent-runs-shared-key",
+  "label": "Platform · runs and a shared key",
+  "db": "data/agent-runs-shared-key.db",
+  "home": { "lat": 42, "lng": -95, "zoom": 2.6 },
+  "nodes": [
+    {
+      "kind": "org", "label": "Organisation", "palette": "#4da3ff", "source": "json",
+      "file": "data/agent-runs-shared-key/org.json",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "${org_name}", "secondary": "${org_id}",
+      "pivotable": ["org_id"],
+      "omit": ["timestamp"]
+    },
+    {
+      "kind": "workspace", "label": "Workspace", "palette": "#7ee787", "source": "json",
+      "file": "data/agent-runs-shared-key/workspace.json",
+      "primary": "${workspace_name}", "secondary": "${data_class} · ${workspace_id}",
+      "pivotable": ["workspace_id"],
+      "omit": ["timestamp"]
+    },
+    {
+      "kind": "run_start", "label": "Run start", "palette": "#c4a1ff", "source": "json",
+      "file": "data/agent-runs-shared-key/run_start.json", "timestamp": "timestamp",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "${run_id}", "secondary": "Run start",
+      "pivotable": ["run_id"],
+      "sections": [
+        { "id": "address", "label": "Address", "fields": ["network_id", "city", "country"] }
+      ]
+    },
+    {
+      "kind": "run_end", "label": "Run end", "palette": "#f5a623", "source": "json",
+      "file": "data/agent-runs-shared-key/run_end.json", "timestamp": "timestamp",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "${run_id}", "secondary": "${duration_h} h · ${tool_calls} tool calls · ${safeguard_events} safeguard events",
+      "pivotable": ["run_id"],
+      "sections": [
+        { "id": "run", "label": "Run", "fields": ["run_id", "duration_h", "tool_calls", "safeguard_events", "intervened", "fell_back", "timestamp"] },
+        { "id": "address", "label": "Address", "fields": ["network_id", "city", "country"] }
+      ]
+    },
+    {
+      "kind": "key_reach", "label": "Key reach", "palette": "#4dd0e1", "source": "json",
+      "file": "data/agent-runs-shared-key/key_reach.json", "timestamp": "timestamp",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "path": true, "pathBy": "credential_id", "territory": false,
+      "primary": "${credential_id} · ${workspace_id}", "secondary": "${requests} requests",
+      "pivotable": ["credential_id", "workspace_id"],
+      "sections": [
+        { "id": "reach", "label": "Reach", "fields": ["credential_id", "workspace_id", "requests", "timestamp", "seconds_since_previous", "km_from_previous"] },
+        { "id": "address", "label": "Address", "fields": ["network_id", "city", "country"] }
+      ]
+    },
+    {
+      "kind": "signin", "label": "Sign-in", "palette": "#ff9bd2", "source": "json",
+      "file": "data/agent-runs-shared-key/signin.json",
+      "timestamp": "timestamp",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "${outcome} · ${workspace_id}", "secondary": "${network_id} · ${city}",
+      "pivotable": ["workspace_id", "network_id"],
+      "sections": [
+        { "id": "sign-in", "label": "Sign-in", "fields": ["workspace_id", "outcome", "method", "client", "timestamp"] },
+        { "id": "address", "label": "Address", "fields": ["network_id", "ip", "city", "country"] }
+      ]
+    },
+    {
+      "kind": "decision", "label": "Decision", "palette": "#ff6b6b", "source": "json",
+      "file": "data/agent-runs-shared-key/decision.json", "timestamp": "decided_at",
+      "coords": { "lat": "lat", "lng": "lng" },
+      "primary": "${outcome} · ${target_label}", "secondary": "${decided_by} · ${status}",
+      "pivotable": ["org_id"],
+      "decision": { "status": "status", "outcome": "outcome", "note": "note", "actor": "decided_by", "target": "target_label", "key": "org_id", "event": "event_ids" }
+    }
+  ],
+  "rows": { "by": "credential_id", "member": "workspace_id" },
+  "fields": {
+    "credential_id": { "label": "API key" },
+    "workspace_id": { "label": "Workspace" }
+  },
+  "arrows": [],
+  "rules": []
+}

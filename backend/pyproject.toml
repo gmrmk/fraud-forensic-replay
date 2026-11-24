@@ -1,0 +1,37 @@
+# Tool configuration for the backend craft gate (ruff / black / mypy).
+# This repo pins dependencies via requirements.txt + requirements-dev.txt, not a
+# build backend, so there is intentionally no [project] table - this file exists
+# only to configure the craft tooling that backend/check.ps1 runs.
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv", "generators"]
+
+[tool.ruff.lint]
+# E/F: pyflakes+pycodestyle · I: import order · B: bugbears (real footguns) ·
+# UP: py-version upgrades · SIM: simplifications.
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# seed.py is a deterministic data script; its long category/name tables are data,
+# not logic - exempt it from line-length while it is still one file.
+"tests/*" = ["B"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+extend-exclude = '/generators/'
+
+[tool.mypy]
+python_version = "3.12"
+warn_redundant_casts = true
+warn_unused_ignores = true
+check_untyped_defs = true
+ignore_missing_imports = true   # pyproj / httpx ship without type stubs
+exclude = '(^|/)(\.venv|generators)/'
+# pytest.ini sets pythonpath=. (backend/), so mypy sees tests/_rule_fixtures.py
+# as both "_rule_fixtures" (top-level) and "tests._rule_fixtures" (package path).
+# explicit_package_bases resolves the collision: the canonical name is always
+# relative to the declared package root, not the pythonpath roots.
+explicit_package_bases = true

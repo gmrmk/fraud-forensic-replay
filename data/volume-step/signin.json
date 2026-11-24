@@ -1,0 +1,58 @@
+[
+ {
+  "id": "si-01",
+  "timestamp": "2026-11-03T17:00:00+00:00",
+  "workspace_id": "ws-34b53",
+  "outcome": "success",
+  "method": "single sign-on",
+  "client": "console web",
+  "network_id": "net-101 corporate",
+  "ip": "198.51.100.70",
+  "city": "Salt Lake City",
+  "country": "US",
+  "lat": 40.7608,
+  "lng": -111.891
+ },
+ {
+  "id": "si-02",
+  "timestamp": "2026-11-09T17:55:00+00:00",
+  "workspace_id": "ws-34b53",
+  "outcome": "success",
+  "method": "single sign-on",
+  "client": "console web",
+  "network_id": "net-101 corporate",
+  "ip": "198.51.100.70",
+  "city": "Salt Lake City",
+  "country": "US",
+  "lat": 40.7608,
+  "lng": -111.891
+ },
+ {
+  "id": "si-03",
+  "timestamp": "2026-11-10T16:30:00+00:00",
+  "workspace_id": "ws-34b53",
+  "outcome": "success",
+  "method": "single sign-on",
+  "client": "console web",
+  "network_id": "net-101 corporate",
+  "ip": "198.51.100.70",
+  "city": "Salt Lake City",
+  "country": "US",
+  "lat": 40.7608,
+  "lng": -111.891
+ },
+ {
+  "id": "si-04",
+  "timestamp": "2026-11-10T18:40:00+00:00",
+  "workspace_id": "ws-7ae9d",
+  "outcome": "success",
+  "method": "password",
+  "client": "console web",
+  "network_id": "net-102 corporate",
+  "ip": "203.0.113.90",
+  "city": "Provo",
+  "country": "US",
+  "lat": 40.2338,
+  "lng": -111.6585
+ }
+]

@@ -1,0 +1,72 @@
+{
+  "id": "key-many-networks",
+  "label": "Platform · one key, many networks",
+  "db": "data/key-many-networks.db",
+  "home": { "lat": 42, "lng": -22, "zoom": 2 },
+  "nodes": [
+    {
+      "kind": "org", "label": "Organisation", "palette": "#4da3ff", "source": "json",
+      "file": "data/key-many-networks/org.json",
+      "primary": "${org_name}", "secondary": "${org_id}",
+      "pivotable": ["org_id"],
+      "sections": [
+        { "id": "org", "label": "Organisation", "fields": ["org_id", "org_name", "plan", "networks_both_orgs"] }
+      ]
+    },
+    {
+      "kind": "principal", "label": "Key or seat", "palette": "#c4a1ff", "source": "json",
+      "file": "data/key-many-networks/principal.json",
+      "primary": "${principal_name}", "secondary": "${principal_id}",
+      "pivotable": ["principal_id"],
+      "sections": [
+        { "id": "principal", "label": "Key or seat", "fields": ["principal_id", "principal_name", "networks_seen", "requests_18d"] }
+      ]
+    },
+    {
+      "kind": "network_seen", "label": "Network seen", "palette": "#7ee787", "source": "json",
+      "file": "data/key-many-networks/network_seen.json",
+      "timestamp": "timestamp",
+      "primary": "${principal_id} · ${network_id}", "secondary": "${network_type} · after ${previous_network}",
+      "pivotable": ["principal_id", "network_id"],
+      "sections": [
+        { "id": "network", "label": "Network", "fields": ["principal_id", "network_id", "network_type", "previous_network", "timestamp"] }
+      ]
+    },
+    {
+      "kind": "reset", "label": "Limit reset", "palette": "#f5a623", "source": "json",
+      "file": "data/key-many-networks/reset.json",
+      "timestamp": "timestamp",
+      "primary": "${seat_id} · ${after_offer_s} s after the offer opened", "secondary": "${org_id}",
+      "pivotable": ["org_id", "seat_id"],
+      "sections": [
+        { "id": "reset", "label": "Reset", "fields": ["org_id", "seat_id", "after_offer_s", "other_seats", "timestamp"] }
+      ]
+    },
+    {
+      "kind": "usage_day", "label": "Daily requests", "palette": "#ffd166", "source": "json",
+      "file": "data/key-many-networks/usage_day.json",
+      "timestamp": "timestamp",
+      "primary": "${requests} requests", "secondary": "${output_tokens_m} M output tokens",
+      "pivotable": [],
+      "magnitude": "requests", "magnitudeLabel": "Requests", "magnitudeUnit": "requests",
+      "sections": [
+        { "id": "usage", "label": "Day", "fields": ["requests", "output_tokens_m", "timestamp"] }
+      ]
+    },
+    {
+      "kind": "decision", "label": "Decision", "palette": "#ff6b6b", "source": "json",
+      "file": "data/key-many-networks/decision.json",
+      "timestamp": "decided_at",
+      "primary": "${outcome} · ${target_label}", "secondary": "${decided_by} · ${status}",
+      "pivotable": ["org_id"],
+      "decision": { "status": "status", "outcome": "outcome", "note": "note", "actor": "decided_by", "target": "target_label", "key": "org_id", "event": "event_ids" }
+    }
+  ],
+  "rows": { "by": "principal_id", "member": "network_id" },
+  "fields": {
+    "principal_id": { "label": "Key or seat" },
+    "network_id": { "label": "Network" }
+  },
+  "arrows": [],
+  "rules": []
+}

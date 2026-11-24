@@ -1,0 +1,67 @@
+[
+ {
+  "id": "dec-card-0001",
+  "card_id": "card-marcus-visa-001",
+  "event_id": "tx-card-marcus-visa-001-0065",
+  "target_label": "Marcus Chen \u00b7 Houston, TX",
+  "status": "PASS",
+  "outcome": "PASSED",
+  "note": "One stripe fallback at Birchcrofte Bistro. The card read by chip 45 minutes before and by contactless the next morning.",
+  "decided_by": "investigator",
+  "decided_at": "2026-05-11T09:30:00-05:00",
+  "lat": 29.574539,
+  "lng": -95.759506
+ },
+ {
+  "id": "dec-card-0002",
+  "card_id": "card-marcus-visa-001",
+  "event_id": "tx-card-marcus-visa-001-0110",
+  "target_label": "Marcus Chen \u00b7 Houston, TX",
+  "status": "WAITING",
+  "outcome": "WAITING",
+  "note": "Three new subscription merchants in three minutes. Card on watch until the cardholder confirms by callback.",
+  "decided_by": "investigator",
+  "decided_at": "2026-05-21T10:05:00-05:00",
+  "lat": 29.777,
+  "lng": -95.546
+ },
+ {
+  "id": "dec-card-0003",
+  "card_id": "card-marcus-visa-001",
+  "event_id": "tx-card-marcus-visa-001-0140",
+  "target_label": "Marcus Chen \u00b7 Houston, TX",
+  "status": "FAIL",
+  "outcome": "FRAUD",
+  "note": "Cardholder reached in Houston with the card in his wallet. The Lekki swipes use a counterfeit stripe. Card blocked and reissued.",
+  "decided_by": "investigator",
+  "decided_at": "2026-05-27T08:20:00-05:00",
+  "lat": 6.5363999999999995,
+  "lng": 3.3971999999999998
+ },
+ {
+  "id": "dec-card-0004",
+  "card_id": "card-marcus-visa-001",
+  "event_id": "tx-card-marcus-visa-001-0143",
+  "target_label": "Marcus Chen \u00b7 Houston, TX",
+  "status": "FAIL",
+  "outcome": "FRAUD",
+  "note": "Four stripe fallbacks in eight minutes in Lekki, after 69 chip reads in Texas. Counterfeit card.",
+  "decided_by": "investigator",
+  "decided_at": "2026-05-27T08:21:00-05:00",
+  "lat": 6.5384,
+  "lng": 3.4042
+ },
+ {
+  "id": "dec-card-0005",
+  "card_id": "card-marcus-visa-001",
+  "event_id": "tx-card-marcus-visa-001-0057",
+  "target_label": "Marcus Chen \u00b7 Houston, TX",
+  "status": "PASS",
+  "outcome": "PASSED",
+  "note": "Genuine $44 fuel purchase. This pump is the breach point: all 30 cards used here from May 4 to May 13 were later used for fraud. Terminal referred to the acquirer.",
+  "decided_by": "investigator",
+  "decided_at": "2026-05-27T10:40:00-05:00",
+  "lat": 29.777,
+  "lng": -95.546
+ }
+]

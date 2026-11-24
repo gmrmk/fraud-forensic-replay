@@ -1,0 +1,210 @@
+[
+ {
+  "id": "rs-0001",
+  "timestamp": "2026-11-09T18:00:38+00:00",
+  "org_id": "org-86682",
+  "seat_id": "seat-99471",
+  "after_offer_s": 38,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0002",
+  "timestamp": "2026-11-09T18:00:41+00:00",
+  "org_id": "org-66335",
+  "seat_id": "seat-61026",
+  "after_offer_s": 41,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0003",
+  "timestamp": "2026-11-09T18:00:44+00:00",
+  "org_id": "org-63987",
+  "seat_id": "seat-52183",
+  "after_offer_s": 44,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0004",
+  "timestamp": "2026-11-09T18:00:47+00:00",
+  "org_id": "org-78401",
+  "seat_id": "seat-22978",
+  "after_offer_s": 47,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0005",
+  "timestamp": "2026-11-09T18:00:52+00:00",
+  "org_id": "org-94329",
+  "seat_id": "seat-66423",
+  "after_offer_s": 52,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0006",
+  "timestamp": "2026-11-09T18:00:55+00:00",
+  "org_id": "org-77075",
+  "seat_id": "seat-80366",
+  "after_offer_s": 55,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0007",
+  "timestamp": "2026-11-09T18:01:01+00:00",
+  "org_id": "org-81717",
+  "seat_id": "seat-38171",
+  "after_offer_s": 61,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0008",
+  "timestamp": "2026-11-09T18:01:03+00:00",
+  "org_id": "org-89273",
+  "seat_id": "seat-54570",
+  "after_offer_s": 63,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0009",
+  "timestamp": "2026-11-09T18:01:10+00:00",
+  "org_id": "org-58628",
+  "seat_id": "seat-79342",
+  "after_offer_s": 70,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0010",
+  "timestamp": "2026-11-09T18:01:17+00:00",
+  "org_id": "org-62879",
+  "seat_id": "seat-39773",
+  "after_offer_s": 77,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0011",
+  "timestamp": "2026-11-09T18:01:24+00:00",
+  "org_id": "org-38687",
+  "seat_id": "seat-20862",
+  "after_offer_s": 84,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0012",
+  "timestamp": "2026-11-09T18:01:26+00:00",
+  "org_id": "org-66335",
+  "seat_id": "seat-27310",
+  "after_offer_s": 86,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0013",
+  "timestamp": "2026-11-09T18:01:32+00:00",
+  "org_id": "org-89479",
+  "seat_id": "seat-40426",
+  "after_offer_s": 92,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0014",
+  "timestamp": "2026-11-09T18:02:38+00:00",
+  "org_id": "org-66335",
+  "seat_id": "seat-44368",
+  "after_offer_s": 158,
+  "other_seats": 0
+ },
+ {
+  "id": "rs-0015",
+  "timestamp": "2026-11-09T18:02:44+00:00",
+  "org_id": "org-94329",
+  "seat_id": "seat-64271",
+  "after_offer_s": 164,
+  "other_seats": 1
+ },
+ {
+  "id": "rs-0016",
+  "timestamp": "2026-11-09T18:02:52+00:00",
+  "org_id": "org-62879",
+  "seat_id": "seat-52198",
+  "after_offer_s": 172,
+  "other_seats": 1
+ },
+ {
+  "id": "rs-0017",
+  "timestamp": "2026-11-09T18:03:09+00:00",
+  "org_id": "org-63987",
+  "seat_id": "seat-73007",
+  "after_offer_s": 189,
+  "other_seats": 2
+ },
+ {
+  "id": "rs-0018",
+  "timestamp": "2026-11-09T18:03:16+00:00",
+  "org_id": "org-81717",
+  "seat_id": "seat-29174",
+  "after_offer_s": 196,
+  "other_seats": 2
+ },
+ {
+  "id": "rs-0019",
+  "timestamp": "2026-11-09T18:03:21+00:00",
+  "org_id": "org-58628",
+  "seat_id": "seat-44512",
+  "after_offer_s": 201,
+  "other_seats": 2
+ },
+ {
+  "id": "rs-0020",
+  "timestamp": "2026-11-09T18:03:27+00:00",
+  "org_id": "org-86682",
+  "seat_id": "seat-90740",
+  "after_offer_s": 207,
+  "other_seats": 3
+ },
+ {
+  "id": "rs-0021",
+  "timestamp": "2026-11-09T18:03:33+00:00",
+  "org_id": "org-66335",
+  "seat_id": "seat-59227",
+  "after_offer_s": 213,
+  "other_seats": 1
+ },
+ {
+  "id": "rs-0022",
+  "timestamp": "2026-11-09T18:03:38+00:00",
+  "org_id": "org-89479",
+  "seat_id": "seat-96137",
+  "after_offer_s": 218,
+  "other_seats": 2
+ },
+ {
+  "id": "rs-0023",
+  "timestamp": "2026-11-09T18:03:41+00:00",
+  "org_id": "org-78401",
+  "seat_id": "seat-26427",
+  "after_offer_s": 221,
+  "other_seats": 3
+ },
+ {
+  "id": "rs-0024",
+  "timestamp": "2026-11-09T18:03:48+00:00",
+  "org_id": "org-77075",
+  "seat_id": "seat-35329",
+  "after_offer_s": 228,
+  "other_seats": 3
+ },
+ {
+  "id": "rs-0025",
+  "timestamp": "2026-11-09T18:03:53+00:00",
+  "org_id": "org-89273",
+  "seat_id": "seat-62800",
+  "after_offer_s": 233,
+  "other_seats": 3
+ },
+ {
+  "id": "rs-0026",
+  "timestamp": "2026-11-09T18:03:56+00:00",
+  "org_id": "org-38687",
+  "seat_id": "seat-85678",
+  "after_offer_s": 236,
+  "other_seats": 3
+ }
+]

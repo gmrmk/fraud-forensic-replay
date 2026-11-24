@@ -1,0 +1,23 @@
+[
+ {
+  "id": "wk-0001",
+  "timestamp": 0,
+  "workspace_id": "wsp-BCMJVY",
+  "workspace_name": "Corvane Wards",
+  "data_class": "health"
+ },
+ {
+  "id": "wk-0002",
+  "timestamp": 0,
+  "workspace_id": "wsp-V730PK",
+  "workspace_name": "Ilmarrow Bench",
+  "data_class": "non-health"
+ },
+ {
+  "id": "wk-0003",
+  "timestamp": 0,
+  "workspace_id": "wsp-LN8CZ7",
+  "workspace_name": "Sedgefield Base",
+  "data_class": "non-health"
+ }
+]

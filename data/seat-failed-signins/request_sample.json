@@ -1,0 +1,15 @@
+[
+ {
+  "id": "rq-0001",
+  "seat_id": "seat-69701",
+  "network_id": "net-101 education",
+  "timestamp": "2026-11-11T02:52:30+00:00",
+  "ip": "192.0.2.17",
+  "endpoint": "/v1/messages",
+  "response_code": 200,
+  "city": "Seattle",
+  "country": "US",
+  "lat": 47.6062,
+  "lng": -122.3321
+ }
+]

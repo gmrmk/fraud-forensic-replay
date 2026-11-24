@@ -1,0 +1,616 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Static MapLibre stylesheet (vendored via npm import in GlobeMap.tsx). */
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+/* Self-hosted Atkinson Hyperlegible Next (variable, weights 300-800), served from
+   our own origin so it never depends on the Google Fonts CDN. Two subsets: the
+   LATIN face (basic a-z/A-Z/0-9/punctuation, no unicode-range so it is the primary
+   face for all UI text) and the LATIN-EXT face (accented/extended glyphs). The
+   first self-host attempt mistakenly used only latin-ext, so all basic-Latin text
+   fell back to the system font. */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("/fonts/atkinson-latin.woff2") format("woff2");
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("/fonts/atkinson-latin-ext.woff2") format("woff2");
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Hanken Grotesk variable (self-hosted) - display / heading face */
+@font-face {
+  font-family: "Hanken Grotesk";
+  src: url("/fonts/hanken-grotesk-var.woff2") format("woff2");
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Atkinson Hyperlegible Mono variable (self-hosted) - monospace / data face */
+@font-face {
+  font-family: "Atkinson Hyperlegible Mono";
+  src: url("/fonts/atkinson-mono-var.woff2") format("woff2");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* === Motion + atmosphere tokens ===
+ * Motion easings/durations as CSS custom properties so every surface eases on
+ * one curve, and view-flips read from the same vocabulary. Compositor-
+ * friendly only (transform/opacity); honored by prefers-reduced-motion below.
+ */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.15, 1);
+  --dur-fast: 150ms;
+  --dur-normal: 280ms;
+  --dur-flip: 440ms;
+}
+
+/* === Layout, typographic, and shape tokens ================================
+ * Non-color design tokens consumed by instrument/glass/scrim material
+ * classes and layout surfaces. Color vars are generated per-(theme×color)
+ * via virtual:theme.css and set on <html data-theme data-color>.
+ */
+:root {
+  --gutter: 30px;
+  --pad: 44px;
+  --step: 360ms cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Display face is Atkinson Hyperlegible Next too (2026-06-18, owner) - one
+     consistent Atkinson voice; the prior Hanken Grotesk display is retired. */
+  --display: 'Atkinson Hyperlegible Next', 'Helvetica Neue', Arial, sans-serif;
+  --body:    'Atkinson Hyperlegible Next', -apple-system, 'Segoe UI', sans-serif;
+  --mono:    'Atkinson Hyperlegible Mono', ui-monospace, 'IBM Plex Mono', monospace;
+
+  --radius-lg: 24px;
+  --radius-md: 14px;
+  --radius-sm: 9px;
+  --glass-pad-x: 24px;
+  --glass-pad-y: 20px;
+
+  /* Measured height of the case-mode bottom stack (attribution + ticker +
+     timeline, including the timeline's 12px bottom gutter). App.tsx sets the
+     live value via a ResizeObserver; this 173px default is the as-shipped
+     stack height (18px attribution + 36px ticker + 107px timeline + 12px
+     gutter) so consumers clear the stack before the observer first fires. */
+  --bottom-stack-h: 173px;
+
+  /* The text size. --ts is the chrome's scale (store/text-size.ts writes it on the root from the
+     saved step; 1 is the default). .chrome-zoom below zooms a chrome root by it. A length in the
+     window's pixels that is used inside a zoomed root is divided by it: --vh-c is the window's
+     height and --bottom-stack-c the bottom stack's drawn height, both in the chrome's own pixels.
+     This is the one place the CSS divides; every chrome height cap reads these two. (Assumes a
+     viewport length inside a zoomed element is multiplied by the zoom: design section 7.) */
+  --ts: 1;
+  --vh-c: calc(100vh / var(--ts));
+  --bottom-stack-c: calc(var(--bottom-stack-h) / var(--ts));
+}
+
+/* A chrome root. Never put it on an element inside another one: zoom compounds. A shell that
+   script places or measures in window pixels is not zoomed; its content is. */
+.chrome-zoom {
+  zoom: var(--ts);
+}
+
+/* The foot cue of a window body that scrolls (WindowFrame's footCue): two background layers, no
+   script. The shade is attached to the body's own box (scroll), so it sits at the lower edge wherever
+   the content is; the cover is attached to the content (local), in the panel's colour, and is painted
+   over the shade, so scrolled to the end the cover lies on the shade and the cue is gone. The cover is
+   the first (top) layer and is taller than the shade. The shade is the text ink at 16 percent, so it
+   lightens a dark panel and darkens a light one (a black shade would not show on the dark panel). The
+   shade stops 10 px short of the right edge: that is the scrollbar gutter a fixed-width frame reserves
+   (it measures 10 px in Chromium), which the cover does not reach, so a shade there would stay lit at
+   the end. LIMIT: a platform whose gutter is not 10 px leaves the shade that much short or long there. */
+.foot-cue {
+  background:
+    linear-gradient(to top, rgb(var(--panel-base)) 80%, rgb(var(--panel-base) / 0)) bottom / 100% 20px no-repeat local,
+    linear-gradient(to top, color-mix(in srgb, var(--text) 16%, transparent), transparent) bottom left / calc(100% - 10px) 16px no-repeat scroll;
+}
+
+/* The top row: the title card (column 1), the menu group (column 2) and, while it is open, the
+   Inspector's width (the third column's minimum). It is one chrome root, so its gutters and its
+   lengths scale with --ts. The menu group keeps its own width and sits at the window's centre while
+   the two outer columns can hold the title card and the Inspector; when they cannot, the third
+   column keeps the Inspector's width and the first one, which holds the title card, gives way (its
+   lines are cut with an ellipsis). The columns need no knowledge of the menu's width. */
+.top-row {
+  --reserve: 0px;
+  top: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto minmax(var(--reserve), 1fr);
+  column-gap: 0.75rem;
+}
+/* The Inspector is w-80 (20rem) wide and sits at the row's right edge. */
+.top-row[data-inspector="open"] {
+  --reserve: 20rem;
+}
+/* While the restart banner shows, the menu group sits below it: the banner is 2rem tall (h-8) and the
+   row starts 0.75rem down, so 1.5rem more puts the group 4px under the banner, so a press on one of
+   its buttons is not taken by the banner. A full 2rem would put the group's foot 1px over the
+   Narrative rail (which starts at 5rem). Only the group moves: the title card stays where it is (a
+   drop would put it over the rail's header), and the banner covers the top of it, as it did before. */
+:root:has(.stale-banner) .top-row-menu {
+  margin-top: 1.5rem;
+}
+
+/* The drawing strip's band (components/paths/DrawStrip.tsx): an empty box under the menu group that
+   the strip reads when a size changes and never paints. Its containing block is the menu group: 0 is
+   the group's left edge and 100% its width, every length in the chrome's own px, as the row's are. It
+   repeats the row's arithmetic: the window (divided as --vh-c is, for a width), the third column (the
+   Inspector's reserve or its share), the first column, and from them the group's left edge in the
+   window (--strip-at). Its left edge is 8px right of the Narrative panel's right edge: 0.75rem + 288px
+   from the window's left while the panel is open (this rule), 0.75rem + 44px while it is folded and the
+   window's left edge when none is drawn (the two rules after it, told by the panel's toggle label).
+   Its right edge is 8px left of the Inspector while it is open (the reserve), else the row's end. The
+   title card's edge is read by the strip itself. */
+.path-strip-band {
+  --strip-vw: calc(100vw / var(--ts));
+  --strip-col3: max(var(--reserve), calc((var(--strip-vw) - 3rem - 100%) / 2));
+  --strip-at: calc(1.5rem + max(0px, calc(var(--strip-vw) - 3rem - 100% - var(--strip-col3))));
+  position: absolute;
+  top: 100%;
+  height: 0;
+  left: calc(0.75rem + 288px + 8px - var(--strip-at));
+  right: calc(100% + var(--strip-at) + 0.75rem + var(--reserve) + min(var(--reserve), 8px) - var(--strip-vw));
+  visibility: hidden;
+  pointer-events: none;
+}
+:root:has(button[aria-label="Open the narrative"]) .path-strip-band {
+  left: calc(0.75rem + 44px + 8px - var(--strip-at));
+}
+:root:not(:has(button[aria-label$="the narrative"])) .path-strip-band {
+  left: calc(0px - var(--strip-at));
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+    /* Base weight 500, not the inherited 400 - the UI read "razor thin" at 400,
+       especially as dark text on the light theme (2026-06-18, owner). Headings
+       that set their own weight (700/800) are unaffected. */
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Atmosphere - the black is never flat. A near-invisible grain plus a very
+     low radial vignette give the ground depth without reading as decoration.
+     Rendered as a dedicated overlay element (App.tsx, just above the globe and
+     below the HUD chrome) rather than a body pseudo-element, because the app
+     shell paints an opaque bg-ground that would occlude anything behind it.
+     pointer-events:none so it never intercepts a map drag. The grain is a tiny
+     inline SVG fractal-noise tile at ~3.5% opacity; the vignette is a single
+     radial-gradient darkening the corners. Static (no animation) so it costs
+     nothing per frame.
+
+     LIGHT-MODE (Phase 4 M, 2026-06-18): the inversion is now LANDED, coupled to
+     the light basemap that just shipped (positron). Dark theme keeps the dark-
+     corner vignette over CartoDB Dark Matter; light theme overlays CartoDB
+     Positron, so the vignette inverts (rule below) to a soft light-center bloom
+     fading to a faint warm-grey edge - framing the light globe without the dark
+     corners that would fight a light basemap. Grain stays identical (theme-
+     neutral texture); only the radial gradient flips. */
+  /* Deep-space backdrop behind the transparent globe canvas (App.tsx: .globe-space
+     sits earlier in DOM with no z-index, so it paints UNDER the canvas). The globe
+     sphere is opaque and masks it; only the off-globe void shows this. Dark in BOTH
+     themes - space is theme-independent (Apple-Maps model: lit planet on dark
+     space). This is the real fix for the light-mode "white void": under globe
+     projection maplibre's setSky sky-color is inert (#5230), so the void is whatever
+     sits behind the transparent canvas (was the near-white bg-ground page; now this).
+     Pure CSS, static (reduced-motion safe), survives the destructive setStyle swap.
+     Layers: a sparse multi-scale starfield (tiled radial-gradient dots, irregular
+     repeat periods so no visible grid) over a deep-space core glow fading to near-
+     black at the edges. */
+  /* A decision capsule or queue flag on the far side of the globe is hidden and leaves the tab
+     order (maplibre toggles the class from transform.isLocationOccluded). */
+  .verdict-marker.maplibregl-marker-covered { visibility: hidden; }
+  .globe-space {
+    background-color: #02040a;
+    background-image:
+      radial-gradient(1px 1px at 40px 60px, rgba(255, 255, 255, 0.72), transparent),
+      radial-gradient(1px 1px at 180px 120px, rgba(200, 220, 255, 0.55), transparent),
+      radial-gradient(1.5px 1.5px at 110px 200px, rgba(255, 255, 255, 0.6), transparent),
+      radial-gradient(1px 1px at 240px 44px, rgba(255, 255, 255, 0.42), transparent),
+      radial-gradient(1px 1px at 300px 170px, rgba(190, 210, 255, 0.5), transparent),
+      radial-gradient(
+        circle at 50% 44%,
+        #0b1a33 0%,
+        #060d1e 40%,
+        #02040a 100%
+      );
+    background-repeat: repeat, repeat, repeat, repeat, repeat, no-repeat;
+    background-size:
+      250px 250px,
+      330px 330px,
+      410px 410px,
+      300px 300px,
+      370px 370px,
+      100% 100%;
+  }
+
+  .ground-atmosphere {
+    background-image:
+      radial-gradient(
+        ellipse 120% 90% at 50% 42%,
+        rgba(0, 0, 0, 0) 55%,
+        rgba(0, 0, 0, 0.5) 100%
+      ),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    background-size:
+      100% 100%,
+      160px 160px;
+  }
+
+  /* Light-mode vignette - now that the globe sits on a DARK space backdrop in BOTH
+     themes (.globe-space), light mode no longer needs the old white center-bloom
+     (which was tuned for a light void). It gets a GENTLER dark vignette than dark
+     mode (0.3 vs 0.5) so it frames the lit globe against the dark space without
+     crushing the light basemap. Replaces ONLY the radial gradient (first
+     background-image layer); the grain tile is re-declared identically so the
+     shorthand does not drop it. */
+  [data-theme="light"] .ground-atmosphere {
+    background-image:
+      radial-gradient(
+        ellipse 120% 90% at 50% 42%,
+        rgba(0, 0, 0, 0) 58%,
+        rgba(0, 0, 0, 0.3) 100%
+      ),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    background-size:
+      100% 100%,
+      160px 160px;
+  }
+
+  /* Reduced-motion: the atmosphere is static (no animation), so nothing to
+     disable here, but keep the rule documented as the single place motion
+     prefs are honored for the ground layer. */
+  @media (prefers-reduced-motion: reduce) {
+    .ground-atmosphere {
+      /* static already; intentionally no-op */
+    }
+  }
+
+  ::selection {
+    background: #00e5ff;
+    color: #000;
+  }
+
+  /* Hide MapLibre's default attribution control chrome - we add our own
+     compact attribution in the HUD bottom-right to keep the corners tight.
+     (License attribution is still rendered, just in our HUD style.) */
+  .maplibregl-ctrl-attrib,
+  .maplibregl-ctrl-logo {
+    display: none !important;
+  }
+
+  /* Bloomberg-terminal-style scrollbars - thin, dark, accent on hover.
+     Override browser defaults so scrollable panels (PivotPopover rows,
+     Inspector body, NarrativeLog) read as part of the HUD chrome
+     instead of stock OS gutters. Applies to WebKit/Blink (Chrome,
+     Edge, Safari); Firefox uses scrollbar-* properties on `*`. */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(12, 16, 20, 0.6);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(60, 70, 85, 0.5);
+    border-radius: 2px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 229, 255, 0.4);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: rgba(12, 16, 20, 0.6);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(60, 70, 85, 0.5) rgba(12, 16, 20, 0.6);
+  }
+
+  /* Focus-ring baseline. One universal rule gives every focusable element a
+     visible keyboard-focus outline with zero per-element work. Uses the
+     mode-aware --alarm channel so it survives all 6 color modes. It is an
+     `outline` (not a box-shadow) so it composes with the Tailwind ring
+     utilities; elements that set `focus:outline-none` suppress it and keep
+     their own ring. As surfaces adopt the primitives, their ad-hoc
+     `focus-visible:ring-*` strings get deleted in favor of this base rule
+     (primitives carry no bespoke ring). */
+  :focus-visible {
+    outline: 1px solid var(--alarm);
+    outline-offset: 2px;
+    border-radius: inherit;
+  }
+}
+
+/* === TickerBar - kind-colored breathing pulse (spec § 3) =================
+ * Always-on rhythm-mimicry applied to the ticker .event row: a 2.4 s
+ * sawtooth between low (4% alpha) and high (10% alpha) of the kind
+ * palette. Pure CSS keyframe - no anime.js. Same primitive family as
+ * the at-rest fraud-marker radar cascade per
+ * INSIGHT-2026-05-26-radar-ping-rhythm-mimicry.md, but at low amplitude
+ * so it never competes with the marker pulses on the map.
+ *
+ * Kind color is mode-aware: each kind maps to a risk-ramp slot (or
+ * the alarm channel) through the rgb(var(--x-rgb) / a) token idiom, so the
+ * pulse recolors across all 6 color modes and fraud survives every CVD mode.
+ * entity-mapping: fraud->alarm, auth->r1, login->r2, account_event->r3,
+ * transfer->r1, place->text-faint. Adding a new entity kind is one more
+ * .kind-X rule (the keyframe is shared).
+ */
+@keyframes ticker-pulse {
+  0%, 100% { background-color: var(--ticker-pulse-low, transparent); }
+  50%      { background-color: var(--ticker-pulse-high, transparent); }
+}
+
+.ticker-event-pulse {
+  animation: ticker-pulse 2400ms ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker-event-pulse { animation: none; }
+}
+
+/* Each kind sets two channels off its palette slot: the pulse tint (a faint
+ * rgb(...)/alpha wash on the .event row) and --kind-token, the solid color the
+ * dot + label read. The pulse keeps the raw slot --x-rgb (a 4-10% wash on the
+ * panel reads fine at any luminance). The dot/label instead read the
+ * --x-on-panel variant: the same mode-aware slot color, but
+ * luminance-clamped to clear WCAG AA on the instrument panel. The raw globe
+ * slots are tuned for the dark globe substrate and collapse to ~1.1:1 as panel
+ * text (deuteranopia auth navy); --x-on-panel is the panel-substrate variant. */
+.ticker-event-pulse.kind-fraud {
+  --ticker-pulse-low: rgb(var(--alarm-rgb) / 0.04);
+  --ticker-pulse-high: rgb(var(--alarm-rgb) / 0.10);
+  --kind-token: var(--alarm-on-panel);
+  --kind-label: var(--ticker-kind-fraud);
+}
+
+.ticker-event-pulse.kind-auth {
+  --ticker-pulse-low: rgb(var(--r1-rgb) / 0.04);
+  --ticker-pulse-high: rgb(var(--r1-rgb) / 0.10);
+  --kind-token: var(--r1-on-panel);
+  --kind-label: var(--ticker-kind-auth);
+}
+
+.ticker-event-pulse.kind-login {
+  --ticker-pulse-low: rgb(var(--r2-rgb) / 0.04);
+  --ticker-pulse-high: rgb(var(--r2-rgb) / 0.10);
+  --kind-token: var(--r2-on-panel);
+  --kind-label: var(--ticker-kind-login);
+}
+
+.ticker-event-pulse.kind-account_event {
+  --ticker-pulse-low: rgb(var(--r3-rgb) / 0.04);
+  --ticker-pulse-high: rgb(var(--r3-rgb) / 0.10);
+  --kind-token: var(--r3-on-panel);
+  --kind-label: var(--ticker-kind-account-event);
+}
+
+.ticker-event-pulse.kind-transfer {
+  --ticker-pulse-low: rgb(var(--r1-rgb) / 0.04);
+  --ticker-pulse-high: rgb(var(--r1-rgb) / 0.10);
+  --kind-token: var(--r1-on-panel);
+  --kind-label: var(--ticker-kind-auth);
+}
+
+.ticker-event-pulse.kind-place {
+  --ticker-pulse-low: rgb(var(--text-faint-rgb) / 0.04);
+  --ticker-pulse-high: rgb(var(--text-faint-rgb) / 0.10);
+  --kind-token: var(--text-faint-on-panel);
+}
+
+/* The kind dot + kind label share the row's --kind-token, set per
+ * kind above and inherited down from the .event.kind-X row - so they recolor
+ * across all 6 color modes (and survive every CVD mode) while staying legible on
+ * the panel. The manifest palette is passed inline as --kind-fallback, so a kind
+ * WITHOUT a .kind-X rule (a future scenario kind) still renders its declared
+ * color with zero CSS. */
+.ticker-kind-dot {
+  background-color: var(--kind-token, var(--kind-fallback));
+}
+
+/* The label reads --kind-label: the kind's on-panel colour stepped
+ * to 6.0 on the kind's own pulse-peak surface, the 10 px text's margin. A kind without a --kind-label
+ * (place, a future scenario kind) falls back to --kind-token, then to the manifest colour. The dot keeps
+ * --kind-token: it is a graphic, not text. */
+.ticker-kind-label {
+  color: var(--kind-label, var(--kind-token, var(--kind-fallback)));
+}
+
+/* === TickerBar - paused state (TML-22) ====================================
+ * When isPlaying=false, TickerBar adds `.paused` to the .ticker shell.
+ * The now-label dims and a vertical amber stripe marks the stopped state -
+ * the same amber the risk-ramp uses for r3 / paused-at-boundary events.
+ * The stripe is an inset left border on the .ticker shell (no extra DOM).
+ * Using --r3 (amber) for the stripe keeps it legible in all 6 color modes.
+ */
+.ticker.paused .now-label {
+  color: var(--r3-on-panel);
+}
+
+.ticker.paused {
+  box-shadow:
+    inset 3px 0 0 0 rgb(var(--r3-rgb) / 0.55),
+    inset 0 0 0 1px rgb(var(--edge-light) / var(--panel-hairline)),
+    var(--elev-ambient);
+}
+
+/* Material classes live in @layer components so Tailwind positioning/layout
+   utilities (@layer utilities, which wins over components) applied via a
+   Panel's className escape hatch override the material defaults -- e.g.
+   `absolute`/`fixed` beating the panel's own `position: relative`. Left
+   unlayered, these rules would beat every Tailwind utility (unlayered > layered),
+   which silently broke the first positioned Panel (the identity badge rendered
+   full-width because `.instrument{position:relative}` won over `absolute`). */
+@layer components {
+
+/* === Material classes ======================================================
+ * Instrument, Glass, and Scrim - three surface treatments that consume the
+ * per-(theme×color) CSS vars generated by virtual:theme.css.
+ * Apply to a wrapper element; add a .grain child for the noise overlay.
+ * ======================================================================== */
+
+/* --- Instrument: solid elevated panel with subtle gradient + hairline ------ */
+.instrument {
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--radius-lg);
+  /* m2 refined-instrument (Linear): flat matte, no gradient highlight; the bevel
+     (inset lit edge + contact shadow) is dropped for a single clean hairline + a
+     soft drop shadow. Depth now reads from elevation, not chrome. */
+  background: rgb(var(--panel-base));
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--edge-light) / var(--panel-hairline)),
+    var(--elev-ambient);
+  transition: background var(--step), box-shadow var(--step),
+              border-radius var(--step), transform var(--step);
+}
+@supports (corner-shape: superellipse(2)) {
+  .instrument { corner-shape: superellipse(2.2); }
+}
+.instrument.elev-raised {
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--edge-light) / calc(var(--panel-hairline) + 0.02)),
+    var(--elev-raised);
+}
+.instrument.elev-focal {
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--edge-light) / calc(var(--panel-hairline) + 0.04)),
+    var(--elev-focal);
+}
+.instrument::before { content: none; }
+.instrument > .grain {
+  position: absolute; inset: 0; z-index: 1;
+  border-radius: inherit; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 170px 170px;
+  opacity: var(--panel-grain-op);
+  mix-blend-mode: var(--panel-grain-blend);
+}
+.instrument > *:not(.grain) { position: relative; z-index: 3; }
+
+/* --- Glass: flat matte panel, one fill with backdrop blur, a 1px edge ----- */
+.glass {
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--radius-lg);
+  background: rgb(var(--glass-tint) / var(--glass-fill));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+          backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--glass-edge) / 0.08),
+    0 2px 6px -2px rgb(var(--glass-shadow) / 0.36),
+    0 18px 40px -18px rgb(var(--glass-shadow) / 0.46);
+  transition: background var(--step), backdrop-filter var(--step),
+              box-shadow var(--step), border-radius var(--step), transform var(--step);
+}
+@supports (corner-shape: superellipse(2)) {
+  .glass { corner-shape: superellipse(2.2); }
+}
+.glass > *:not(.grain) { position: relative; z-index: 3; }
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .glass { background: rgb(var(--glass-tint) / 0.94); }
+}
+
+/* Light-mode card delineation: the white inset-bevel idiom is invisible on a
+   light substrate, so light panels get a crisp dark hairline to separate the
+   card from the near-white positron basemap. Outline (not border) so layout is
+   untouched; -1px offset seats it just inside the rounded edge. Light-only
+   (2026-06-18) - dark mode keeps its bevel. */
+[data-theme="light"] .instrument,
+[data-theme="light"] .glass {
+  outline: 1px solid rgb(var(--edge-contact) / 0.18);
+  outline-offset: -1px;
+}
+
+/* --- Scrim: inset recessed trough (search bars, input wells, inset areas) - */
+.scrim {
+  border-radius: var(--radius-md);
+  background: rgb(var(--panel-floor) / 0.55);
+  box-shadow:
+    inset 0 1px 0 0 rgb(var(--edge-light) / calc(var(--edge-light-op) * 0.6)),
+    inset 0 0 0 1px rgb(var(--edge-contact) / 0.18);
+}
+
+/* --- Accent border / fill: recipes for the Panel accentBorder/accentFill
+   (Phase 1 primitive extension). Each reads the inline
+   --panel-accent var the primitive sets, so the surface recolors per
+   entity/decision from one place. Defined AFTER the material classes so
+   .accent-fill's background wins over the material gradient. -------------- */
+.accent-border-top  { border-top:  2px solid var(--panel-accent, transparent); }
+.accent-border-left { border-left: 2px solid var(--panel-accent, transparent); }
+.accent-border-all  { border: 1px solid var(--panel-accent, transparent); }
+.accent-fill {
+  background: color-mix(in srgb, var(--panel-accent, transparent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--panel-accent, transparent) 40%, transparent);
+}
+
+/* --- The tags' fill on the matches window's rule card ------------------------
+   The count and the ML tag fill with their own colour at --tag-fill (theme/tokens.ts
+   tagFillOf). The rule card paints --surface, not the panel, and in a few palette cells it
+   can take less fill than the panel does (dark deuteranopia and protanopia); the window sets
+   its own value of the same property, so the two components stay unaware of where they sit. */
+[aria-label="Matches workspace"] { --tag-fill: var(--tag-fill-card); }
+
+/* The plate's two colours (MatchBadge, DecisionPill's ML tag): the tag's own text colour, as the line
+   at 60 percent and as the fill at --tag-fill. The box (width, style, radius, padding, line height)
+   is inline in the components. */
+.tag-plate {
+  border-color: color-mix(in srgb, currentColor 60%, transparent);
+  background-color: color-mix(in srgb, currentColor var(--tag-fill), transparent);
+}
+
+/* --- Reduced-motion: disable surface transitions -------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .instrument, .glass { transition: none; }
+}
+
+} /* @layer components - material classes */
+
+/* === Evidence Workspace - window enter + reduced-motion ============
+ * The only workspace styling that Tailwind cannot express inline. All other
+ * motion is class-driven transitions on clip-path/opacity/transform using
+ * the --dur-normal / --ease-out-expo tokens above. */
+@keyframes win-enter {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+/* fill-mode backwards, NOT both/forwards: a filled animation's final
+ * opacity:1 sits in the animation cascade origin, which outranks normal
+ * inline styles (MDN Cascade), so it would defeat the inline dim
+ * (opacity:0.45) on dimmed windows forever after the enter completes.
+ * With backwards, the enter plays, then opacity returns to the inline
+ * style. (Task 6 re-review; MDN-cited.) */
+.win-enter { animation: win-enter var(--dur-normal) var(--ease-out-expo) backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .win-enter { animation: none; }
+  /* The frame sets its fold and dim transitions inline; only !important outranks an
+     inline style. */
+  [data-window-frame], [data-window-frame] * { transition: none !important; }
+}

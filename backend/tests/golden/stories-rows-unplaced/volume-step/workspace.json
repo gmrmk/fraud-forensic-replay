@@ -1,0 +1,26 @@
+[
+ {
+  "id": "ws-34b53",
+  "workspace_id": "ws-34b53",
+  "workspace_name": "Quillon Ops",
+  "retention_setting": "zero_retention_with_exemption"
+ },
+ {
+  "id": "ws-7ae9d",
+  "workspace_id": "ws-7ae9d",
+  "workspace_name": "Tarnmere Desk",
+  "retention_setting": "zero_retention"
+ },
+ {
+  "id": "ws-25709",
+  "workspace_id": "ws-25709",
+  "workspace_name": "Wexhall Review",
+  "retention_setting": "zero_retention"
+ },
+ {
+  "id": "ws-ec034",
+  "workspace_id": "ws-ec034",
+  "workspace_name": "Brindle Works",
+  "retention_setting": "zero_retention"
+ }
+]

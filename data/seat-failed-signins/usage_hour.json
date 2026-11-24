@@ -1,0 +1,68 @@
+[
+ {
+  "id": "uh-0001",
+  "seat_id": "seat-85951",
+  "requests": 142,
+  "timestamp": "2026-11-11T06:00:00+00:00"
+ },
+ {
+  "id": "uh-0002",
+  "seat_id": "seat-85951",
+  "requests": 138,
+  "timestamp": "2026-11-11T07:00:00+00:00"
+ },
+ {
+  "id": "uh-0003",
+  "seat_id": "seat-85951",
+  "requests": 145,
+  "timestamp": "2026-11-11T08:00:00+00:00"
+ },
+ {
+  "id": "uh-0004",
+  "seat_id": "seat-85951",
+  "requests": 139,
+  "timestamp": "2026-11-11T09:00:00+00:00"
+ },
+ {
+  "id": "uh-0005",
+  "seat_id": "seat-69701",
+  "requests": 40,
+  "timestamp": "2026-11-11T10:00:00+00:00"
+ },
+ {
+  "id": "uh-0006",
+  "seat_id": "seat-85951",
+  "requests": 141,
+  "timestamp": "2026-11-11T10:00:00+00:00"
+ },
+ {
+  "id": "uh-0007",
+  "seat_id": "seat-69701",
+  "requests": 1722,
+  "timestamp": "2026-11-11T11:00:00+00:00"
+ },
+ {
+  "id": "uh-0008",
+  "seat_id": "seat-85951",
+  "requests": 144,
+  "timestamp": "2026-11-11T11:00:00+00:00"
+ },
+ {
+  "id": "uh-0009",
+  "seat_id": "seat-69701",
+  "requests": 246,
+  "timestamp": "2026-11-11T12:00:00+00:00"
+ },
+ {
+  "id": "uh-0010",
+  "seat_id": "seat-85951",
+  "requests": 143,
+  "timestamp": "2026-11-11T12:00:00+00:00"
+ },
+ {
+  "id": "uh-0011",
+  "seat_id": "seat-85951",
+  "requests": 71,
+  "timestamp": "2026-11-11T13:00:00+00:00"
+ }
+]

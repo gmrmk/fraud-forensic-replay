@@ -1,0 +1,203 @@
+/**
+ * Playback camera-follow helpers (pure). During playback the globe should keep
+ * the *currently-active* event framed without the analyst hand-spinning it -
+ * and without jittering on every event inside a dense cluster. These pure
+ * functions decide WHAT to look at and WHETHER the move is big enough to be
+ * worth an eased re-center; the actual `map.easeTo` lives in
+ * components/useCameraMoves.ts (the GPU/camera side is eyes-on-gated, this
+ * logic is unit-tested).
+ *
+ * The distance gate is why the camera holds on the Houston baseline cluster
+ * (consecutive events <1° apart) but swings to Lagos on the impossible leap
+ * (~100° apart) - it follows the *story*, not every blip.
+ */
+export interface FollowEvent {
+  ts: number;
+  lng: number;
+  lat: number;
+}
+
+export interface LngLat {
+  lng: number;
+  lat: number;
+}
+
+/** The active event during playback: the latest event at or before time `t`.
+ *  Returns null if no event has occurred yet. Input order-independent. */
+export function activeFollowTarget(
+  events: readonly FollowEvent[],
+  t: number,
+): FollowEvent | null {
+  let best: FollowEvent | null = null;
+  for (const e of events) {
+    if (e.ts <= t && (best === null || e.ts > best.ts)) best = e;
+  }
+  return best;
+}
+
+/** Approximate angular distance in degrees (equirectangular, longitude scaled
+ *  by mean-latitude cosine). Good enough for a "did we move far" gate - not a
+ *  precise geodesic. */
+export function degDistance(a: LngLat, b: LngLat): number {
+  const dLat = a.lat - b.lat;
+  const dLng = (a.lng - b.lng) * Math.cos(((a.lat + b.lat) * 0.5 * Math.PI) / 180);
+  return Math.hypot(dLat, dLng);
+}
+
+/** True when `target` is far enough from `center` to warrant an eased
+ *  re-center - so cluster blips don't jitter the camera but a real jump does. */
+export function shouldRecenter(center: LngLat, target: LngLat, minDeg: number): boolean {
+  return degDistance(center, target) > minDeg;
+}
+
+// ---- The calmer follow: frame the places and hold ----
+//
+// Late in the card story the events alternate between Houston and Lagos, and the old rule crossed
+// the Atlantic for each one. The rule now is: a target that is in view makes no move; a target out
+// of view, while the camera is still at the zoom the case opened on, gets ONE move to the midpoint
+// of the target and the place the story was at before it, so both are in view and the alternation
+// makes no further move; a person who has zoomed in gets the move to the target, as before.
+
+/** Two places this far apart or more are not framed together: the move goes to the target. */
+export const FAR_PAIR_DEG = 120;
+/** A move whose centre is within this many degrees of the camera is no move: the hold. */
+export const HOLD_DEG = 1;
+/** The camera is "at its opening zoom" up to this many zoom levels above the home's zoom. */
+export const HOME_ZOOM_TOLERANCE = 0.25;
+/** A place is in view when it is this fraction of the open part's shorter side inside every edge. */
+export const IN_VIEW_MARGIN = 0.08;
+
+const rad = (d: number): number => (d * Math.PI) / 180;
+const deg = (r: number): number => (r * 180) / Math.PI;
+const unit = (p: LngLat): [number, number, number] => [
+  Math.cos(rad(p.lat)) * Math.sin(rad(p.lng)),
+  Math.sin(rad(p.lat)),
+  Math.cos(rad(p.lat)) * Math.cos(rad(p.lng)),
+];
+
+/** The angle at the globe's centre between two places, in degrees (0 to 180): a true great-circle
+ *  distance, right across the antimeridian and for places far apart, where `degDistance` is not. */
+export function greatCircleDeg(a: LngLat, b: LngLat): number {
+  const [ax, ay, az] = unit(a);
+  const [bx, by, bz] = unit(b);
+  const cross = Math.hypot(ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx);
+  return deg(Math.atan2(cross, ax * bx + ay * by + az * bz));
+}
+
+/** The point midway between two places on the great circle through them. Two places on opposite
+ *  sides of the globe have no one midpoint; the first place is returned. */
+export function greatCircleMidpoint(a: LngLat, b: LngLat): LngLat {
+  const [ax, ay, az] = unit(a);
+  const [bx, by, bz] = unit(b);
+  const x = ax + bx;
+  const y = ay + by;
+  const z = az + bz;
+  const n = Math.hypot(x, y, z);
+  if (n < 1e-9) return { lng: a.lng, lat: a.lat };
+  return { lng: deg(Math.atan2(x, z)), lat: deg(Math.asin(y / n)) };
+}
+
+/** The place the story was at before `target`: the latest event earlier than it and not at its own
+ *  place (more than `HOLD_DEG` away). So two Lagos events in a row both look back to Houston. Null
+ *  when the story has been nowhere else. Input order-independent. */
+export function followPlaceBefore(
+  events: readonly FollowEvent[],
+  target: FollowEvent,
+): FollowEvent | null {
+  let best: FollowEvent | null = null;
+  for (const e of events) {
+    if (e.ts >= target.ts || greatCircleDeg(e, target) <= HOLD_DEG) continue;
+    if (best === null || e.ts > best.ts) best = e;
+  }
+  return best;
+}
+
+/** True when the camera is still at the zoom the case opened on: at or below the home's zoom plus a
+ *  small tolerance (the fit above the bar sets it lower). False when no home is known, so a case
+ *  with no known opening view follows as it did before, to the target. */
+export function atOpeningZoom(zoom: number, homeZoom: number | null | undefined): boolean {
+  return typeof homeZoom === "number" && zoom <= homeZoom + HOME_ZOOM_TOLERANCE;
+}
+
+/** A globe zoom normalised to the equator. For the same globe on screen the library's zoom number
+ *  falls by log2(1 / cos(latitude)) away from the equator (maplibre-gl 5.24.1, getZoomAdjustment), so adding that term gives the zoom the same globe has at the
+ *  equator. A centre-only ease keeps the globe's size, so the follow compares zooms in this form.
+ *  On a flat map the zoom number does not move with latitude. */
+export function equatorZoom(zoom: number, lat: number): number {
+  return zoom + Math.log2(1 / Math.cos((lat * Math.PI) / 180));
+}
+
+/** The follow waits this part of the case's span between its moves and before the first of a play. */
+export const FOLLOW_WAIT_PART = 12;
+
+/** True when the playhead has moved at least `1 / FOLLOW_WAIT_PART` of the span from the anchor,
+ *  either way, so that reverse play waits the same. */
+export function followWaitOver(playhead: number, anchor: number, minTime: number, maxTime: number): boolean {
+  return Math.abs(playhead - anchor) >= (maxTime - minTime) / FOLLOW_WAIT_PART;
+}
+
+export interface FollowMoveInput {
+  /** The event the story is at. */
+  target: LngLat;
+  /** The place the story was at before it; null when there is none. */
+  before: LngLat | null;
+  /** Whether the target is in view. */
+  targetInView: boolean;
+  /** Whether the camera is still at the zoom the case opened on. */
+  atOpeningZoom: boolean;
+  /** Where the camera is. */
+  camera: LngLat;
+}
+
+/** The centre of the one move the follow makes, or null for no move. (a) A target in view: none.
+ *  (b) Out of view at the opening zoom: the midpoint of the target and the place before it when
+ *  they are less than `FAR_PAIR_DEG` apart, else the target. (c) Out of view with the person
+ *  zoomed in: the target. (f) A move whose centre is within `HOLD_DEG` of the camera is none, so
+ *  two places near the edge of the view, each judged out of view from their own midpoint, do not
+ *  ask for the same centre again and again. */
+export function followMove(input: FollowMoveInput): LngLat | null {
+  if (input.targetInView) return null;
+  let to: LngLat = { lng: input.target.lng, lat: input.target.lat };
+  if (input.atOpeningZoom && input.before && greatCircleDeg(input.target, input.before) < FAR_PAIR_DEG) {
+    to = greatCircleMidpoint(input.target, input.before);
+  }
+  return greatCircleDeg(to, input.camera) <= HOLD_DEG ? null : to;
+}
+
+/** The calls `placeInView` makes on the map (a MapLibre `Map` satisfies it; a test passes a fake).
+ *  maplibre-gl 5.24.1: `Map.project` is `transform.locationToScreenPoint` (a pixel in the container);
+ *  `transform.isLocationOccluded` is the globe's horizon test, true for a
+ *  place on the far side (the call a Marker makes) and false under Mercator;
+ *  `Map.getPadding` is the transform's padding, whose bottom is the bar's height. */
+export interface FollowViewMap {
+  project(lngLat: LngLat): { x: number; y: number };
+  transform: { isLocationOccluded(lngLat: LngLat): boolean };
+  getCanvas(): { clientWidth: number; clientHeight: number };
+  getCenter(): LngLat;
+  /** MapLibre's `PaddingOptions`: a side it does not name is 0. */
+  getPadding(): { top?: number; bottom?: number; left?: number; right?: number };
+}
+
+/** A place farther than this from the centre of the view is not in view, though it is on the near
+ *  side: at the whole-globe view the disk lies inside the canvas, so the screen margin never bites
+ *  east and west, and a place 70 degrees out sits on the limb. 60 is half of `FAR_PAIR_DEG`, so two
+ *  places less than 120 apart are each within it from their midpoint. */
+export const IN_VIEW_MAX_DEG = 60;
+
+/** True when the place is on the near side of the globe, within `IN_VIEW_MAX_DEG` of the centre of
+ *  the view, and on screen inside the part of the map that is not under the bar (the map's padding),
+ *  with a margin of `IN_VIEW_MARGIN` of that part's shorter side. */
+export function placeInView(map: FollowViewMap, place: LngLat): boolean {
+  if (map.transform.isLocationOccluded(place)) return false;
+  if (greatCircleDeg(place, map.getCenter()) > IN_VIEW_MAX_DEG) return false;
+  const { x, y } = map.project(place);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+  const { clientWidth: w, clientHeight: h } = map.getCanvas();
+  const pad = map.getPadding();
+  const left = pad.left ?? 0;
+  const right = w - (pad.right ?? 0);
+  const top = pad.top ?? 0;
+  const bottom = h - (pad.bottom ?? 0);
+  const margin = Math.round(IN_VIEW_MARGIN * Math.min(right - left, bottom - top));
+  return x >= left + margin && x <= right - margin && y >= top + margin && y <= bottom - margin;
+}

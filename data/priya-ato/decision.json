@@ -1,0 +1,80 @@
+[
+ {
+  "id": "dec-ato-0001",
+  "account_id": "gen-acct-priya",
+  "event_id": "gen-login-40927",
+  "target_label": "Priya Patel · Houston, TX",
+  "status": "FAIL",
+  "outcome": "ATO",
+  "note": "Reached her on the number on file. She did not sign in, and she remembers a text about her transfer to Jamie K.",
+  "decided_by": "investigator",
+  "decided_at": "2026-05-25T11:18:00-05:00",
+  "lat": 50.1109,
+  "lng": 8.6821
+ },
+ {
+  "id": "dec-ato-0002",
+  "account_id": "gen-acct-priya",
+  "event_id": "gen-ae-40934",
+  "target_label": "Priya Patel · Houston, TX",
+  "status": "FAIL",
+  "outcome": "ATO",
+  "note": "Email on file changed seven minutes into the session. Reverted.",
+  "decided_by": "investigator",
+  "decided_at": "2026-05-25T11:21:00-05:00",
+  "lat": 50.1109,
+  "lng": 8.6821
+ },
+ {
+  "id": "dec-ato-0003",
+  "account_id": "gen-acct-priya",
+  "event_id": "gen-ae-40943",
+  "target_label": "Priya Patel · Houston, TX",
+  "status": "FAIL",
+  "outcome": "ATO",
+  "note": "Payee added by the attacker, on the elevated-risk list. Removed.",
+  "decided_by": "investigator",
+  "decided_at": "2026-05-25T11:22:00-05:00",
+  "lat": 50.1109,
+  "lng": 8.6821
+ },
+ {
+  "id": "dec-ato-0004",
+  "account_id": "gen-acct-priya",
+  "event_id": "gen-tr-40956",
+  "target_label": "Priya Patel · Houston, TX",
+  "status": "FAIL",
+  "outcome": "FRAUD",
+  "note": "$4,200 sent to a payee added 13 minutes earlier. Recall sent to the receiving bank.",
+  "decided_by": "investigator",
+  "decided_at": "2026-05-25T11:25:00-05:00",
+  "lat": 50.1109,
+  "lng": 8.6821
+ },
+ {
+  "id": "dec-ato-0005",
+  "account_id": "gen-acct-priya",
+  "event_id": "gen-tr-40986",
+  "target_label": "Priya Patel · Houston, TX",
+  "status": "FAIL",
+  "outcome": "FRAUD",
+  "note": "The velocity rule blocked this $3,800 wire. No loss. The attacker still held the session.",
+  "decided_by": "investigator",
+  "decided_at": "2026-05-25T11:26:00-05:00",
+  "lat": 50.1109,
+  "lng": 8.6821
+ },
+ {
+  "id": "dec-ato-0006",
+  "account_id": "gen-acct-priya",
+  "event_id": "gen-login-40110",
+  "target_label": "Priya Patel · Houston, TX",
+  "status": "PASS",
+  "outcome": "PASSED",
+  "note": "Her own laptop since June 2025, on her home connection.",
+  "decided_by": "investigator",
+  "decided_at": "2026-05-25T11:45:00-05:00",
+  "lat": 29.76,
+  "lng": -95.36
+ }
+]

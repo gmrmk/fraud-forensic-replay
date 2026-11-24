@@ -1,0 +1,15 @@
+# Resolved versions captured via `uv pip list` after first install (2026-05-26).
+# Update by re-resolving with `uv pip install --upgrade -r requirements.txt`
+# and copying the new versions back here.
+fastapi==0.136.3
+uvicorn[standard]==0.48.0
+pytest==9.0.3
+httpx==0.28.1
+python-dotenv==1.0.1
+pyproj==3.7.2
+# ML layer (2026-06-10 real-ML integration). Present in the venv but unpinned
+# until now; the model artifact is version-locked to sklearn (no cross-version
+# artifact loading), so these pins are load-bearing.
+scikit-learn==1.9.0
+numpy==2.4.6
+joblib==1.5.3

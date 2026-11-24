@@ -1,0 +1,22 @@
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+node_modules/
+dist/
+site/
+.dev-logs/
+data/places_cache/
+data/replay.db
+data/replay.db-journal
+data/replay.db-wal
+data/replay.db-shm
+# A person's own notes (custom notes): made at run time, never seeded, never committed.
+data/notes.sqlite3
+data/notes.sqlite3-journal
+data/notes.sqlite3-wal
+data/notes.sqlite3-shm
+.env
+.env.local
+.env.*.local

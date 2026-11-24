@@ -1,0 +1,95 @@
+{
+  "id": "card-fraud",
+  "label": "Card · Houston→Lagos",
+  "db": "data/replay.db",
+  "focal": { "card_id": "card-marcus-visa-001", "account_id": "acct-marcus-cc-001" },
+  "home": { "lat": 20.0, "lng": -40.0, "zoom": 2 },
+  "nodes": [
+    { "kind": "auth", "label": "Authorization", "palette": "#00e5ff", "source": "sql",
+      "query": "SELECT * FROM transactions WHERE is_fraud = 0 ORDER BY timestamp",
+      "scope": { "field": "card_id" },
+      "coords": { "lat": "merchant_lat", "lng": "merchant_lng" }, "timestamp": "timestamp",
+      "primary": "$${amount} · ${merchant_name}", "secondary": "${mcc} · ${merchant_country}",
+      "pivotable": ["acquirer", "pos_entry_mode", "merchant_country", "mcc", "merchant_name", "card_id", "auth_source"] },
+    { "kind": "fraud", "label": "Fraud", "palette": "#ff3d2e", "source": "sql",
+      "query": "SELECT * FROM transactions WHERE is_fraud = 1 ORDER BY timestamp",
+      "scope": { "field": "card_id" },
+      "coords": { "lat": "merchant_lat", "lng": "merchant_lng" }, "timestamp": "timestamp",
+      "primary": "$${amount} · ${merchant_name}", "secondary": "${mcc} · ${merchant_country}",
+      "pivotable": ["acquirer", "pos_entry_mode", "merchant_country", "mcc", "merchant_name", "card_id", "auth_source"] },
+    { "kind": "login", "label": "Login", "palette": "#ff5ce8", "source": "sql",
+      "query": "SELECT * FROM login_events ORDER BY timestamp",
+      "scope": { "field": "account_id" },
+      "coords": { "lat": "ip_lat", "lng": "ip_lng" }, "timestamp": "timestamp",
+      "primary": "${device_fp}", "secondary": "${outcome} · ${ip_type}",
+      "pivotable": ["ip_asn", "device_fp"] },
+    { "kind": "decision", "label": "Decision", "palette": "#ff6b6b", "source": "json",
+      "file": "data/card-fraud/decision.json",
+      "coords": { "lat": "lat", "lng": "lng" }, "timestamp": "decided_at",
+      "primary": "${outcome} · ${target_label}", "secondary": "${decided_by} · ${status}",
+      "pivotable": ["card_id"],
+      "refs": { "event_id": ["auth", "fraud"] },
+      "decision": { "status": "status", "outcome": "outcome", "note": "note", "actor": "decided_by",
+        "target": "target_label", "key": "card_id", "event": "event_id" } },
+    { "kind": "place", "label": "Place", "palette": "#808080", "source": "places-api",
+      "coords": { "lat": "lat", "lng": "lng" }, "timestamp": null,
+      "primary": "${name}", "secondary": "${category}", "pivotable": [] }
+  ],
+  "rows": { "by": "merchant_name" },
+  "fields": {
+    "merchant_name": { "label": "Merchant" }
+  },
+  "lanes": [
+    { "id": "card-spend", "name": "Authorizations", "label": "Spend", "unit": "USD",
+      "kinds": ["auth", "fraud"], "field": "amount", "bucket": "hour", "aggregate": "sum" },
+    { "id": "card-rank", "name": "Authorizations", "label": "Highest model rank", "unit": "pct",
+      "kinds": ["auth", "fraud"], "field": "ml_percentile", "bucket": "hour", "aggregate": "max" }
+  ],
+  "arrows": [
+    { "kind": "impossible", "label": "Impossible travel", "detector": "geo-velocity", "color": "#ff3d2e",
+      "params": { "from": ["auth", "fraud"], "speedMph": 600, "minDistanceMi": 500 } }
+  ],
+  "rules": [
+    { "id": "impossible-travel", "label": "impossible-travel", "detector": "geo-velocity",
+      "verdict": "IMPOSSIBLE TRAVEL", "decision": "DECLINE",
+      "sop": {
+        "what": "Flags one card used in person in two places that are too far apart to travel between in the time that passed.",
+        "why": "",
+        "brief": "One card used in person in two places too far apart for the time between. A physical card cannot be in both. Confirm location with the cardholder. Review surrounding card activity."
+      }
+    },
+    { "id": "card-testing", "label": "card-testing", "detector": "card-testing",
+      "verdict": "CARD TESTING", "decision": "FLAG",
+      "sop": {
+        "what": "A rapid burst of small card-not-present authorizations on one card.",
+        "why": "The detector keys on the burst shape (count, size, gap window), never on a single charge.",
+        "brief": "A burst of small card-not-present charges in minutes. Criminals test stolen numbers with tiny amounts before spending big. Watch the card for what follows. Confirm the small charges with the cardholder."
+      }
+    },
+    { "id": "skimmer-signature", "label": "skimmer-signature", "detector": "skimmer-signature",
+      "verdict": "SKIMMER SIGNATURE", "decision": "REVIEW",
+      "sop": {
+        "what": "A run of consecutive magnetic-stripe fallbacks on a chip-capable card.",
+        "why": "",
+        "brief": "A run of chip-capable swipes falling back to the magnetic stripe. A cloned stripe cannot complete the chip exchange. Compare the run's locations with the cardholder's. Look for a shared terminal among earlier transactions."
+      }
+    },
+    { "id": "common-point-of-purchase", "label": "common-point-of-purchase", "detector": "common-point-of-purchase",
+      "verdict": "COMMON POINT OF PURCHASE", "decision": "REVIEW",
+      "params": { "window_days": 30, "min_cards": 5, "min_share": 0.5 },
+      "sop": {
+        "what": "One terminal that several cards, later compromised, all used in person shortly before.",
+        "why": "The detector reads observable compromise signals only (a run of two or more chip-fallback swipes, each within 60 minutes of the last, after the terminal visit).",
+        "brief": "Several cards that were later compromised all used this one terminal shortly before. A shared terminal is the breach point to investigate. Review every card that used it in the exposure window. Reissue the exposed cards and report the terminal to the acquirer."
+      }
+    },
+    { "id": "ml-card-anomaly", "label": "model anomaly", "detector": "ml-anomaly",
+      "verdict": "MODEL ANOMALY", "decision": "REVIEW",
+      "sop": {
+        "what": "A trained scorecard ranks this card's transactions by model score and surfaces the highest-scoring one when it clears the model's alert threshold.",
+        "why": "This adds a learned signal trained on the population, scoring behavioral features (velocity, amount-vs-own-history, geographic jump, merchant and country novelty) with the seeded risk score excluded.",
+        "brief": "The trained model scored this transaction above its alert threshold. A score is a flag, not proof. Check the top factors in the trace. Compare against the account's normal pattern."
+      }
+    }
+  ]
+}

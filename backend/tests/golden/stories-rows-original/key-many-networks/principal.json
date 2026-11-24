@@ -1,0 +1,50 @@
+[
+ {
+  "id": "key-A26S3T9M",
+  "principal_id": "key-A26S3T9M",
+  "principal_name": "Key",
+  "networks_seen": 44,
+  "requests_18d": 42950,
+  "timestamp": 0
+ },
+ {
+  "id": "seat-59227",
+  "principal_id": "seat-59227",
+  "principal_name": "Seat 2",
+  "networks_seen": 31,
+  "requests_18d": 15210,
+  "timestamp": 0
+ },
+ {
+  "id": "seat-54960",
+  "principal_id": "seat-54960",
+  "principal_name": "Seat 4",
+  "networks_seen": 30,
+  "requests_18d": 14420,
+  "timestamp": 0
+ },
+ {
+  "id": "seat-27310",
+  "principal_id": "seat-27310",
+  "principal_name": "Seat 1",
+  "networks_seen": 29,
+  "requests_18d": 14880,
+  "timestamp": 0
+ },
+ {
+  "id": "seat-61026",
+  "principal_id": "seat-61026",
+  "principal_name": "Seat 3",
+  "networks_seen": 27,
+  "requests_18d": 13960,
+  "timestamp": 0
+ },
+ {
+  "id": "seat-44368",
+  "principal_id": "seat-44368",
+  "principal_name": "Seat 5",
+  "networks_seen": 26,
+  "requests_18d": 13790,
+  "timestamp": 0
+ }
+]

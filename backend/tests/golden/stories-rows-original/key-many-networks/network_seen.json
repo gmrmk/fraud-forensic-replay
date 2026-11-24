@@ -1,0 +1,34 @@
+[
+ {
+  "id": "nw-0001",
+  "timestamp": "2026-11-10T17:41:02+00:00",
+  "principal_id": "key-A26S3T9M",
+  "network_id": "net-102",
+  "network_type": "residential proxy",
+  "previous_network": "net-101"
+ },
+ {
+  "id": "nw-0002",
+  "timestamp": "2026-11-10T17:41:05+00:00",
+  "principal_id": "key-A26S3T9M",
+  "network_id": "net-103",
+  "network_type": "residential proxy",
+  "previous_network": "net-102"
+ },
+ {
+  "id": "nw-0003",
+  "timestamp": "2026-11-10T17:41:09+00:00",
+  "principal_id": "key-A26S3T9M",
+  "network_id": "net-104",
+  "network_type": "residential proxy",
+  "previous_network": "net-103"
+ },
+ {
+  "id": "nw-0004",
+  "timestamp": "2026-11-10T17:41:12+00:00",
+  "principal_id": "key-A26S3T9M",
+  "network_id": "net-105",
+  "network_type": "residential proxy",
+  "previous_network": "net-104"
+ }
+]

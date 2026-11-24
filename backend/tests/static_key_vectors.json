@@ -1,0 +1,50 @@
+[
+  {
+    "url": "/api/scenario",
+    "path": "scenario/_.json"
+  },
+  {
+    "url": "/api/decisions",
+    "path": "decisions/_.json"
+  },
+  {
+    "url": "/api/transactions",
+    "path": "transactions/_.json"
+  },
+  {
+    "url": "/api/transactions?terminal_id=ZEL-7731042",
+    "path": "transactions/terminal_id=ZEL-7731042-1d7c5f1c.json"
+  },
+  {
+    "url": "/api/transactions?card_id=card-marcus-visa-001",
+    "path": "transactions/card_id=card-marcus-visa-001-5a6f5eec.json"
+  },
+  {
+    "url": "/api/entities?kind=console_signin",
+    "path": "entities/kind=console_signin-182ba5ee.json"
+  },
+  {
+    "url": "/api/entities/heat?kind=auth",
+    "path": "entities__heat/kind=auth-9049fa50.json"
+  },
+  {
+    "url": "/api/entities/heat?cap=5000&kind=auth",
+    "path": "entities__heat/cap=5000_kind=auth-f44fd23a.json"
+  },
+  {
+    "url": "/api/logins?account_id=acct-xyz-456",
+    "path": "logins/account_id=acct-xyz-456-2470a474.json"
+  },
+  {
+    "url": "/api/manager/members?dim=merchant_name&value=Alderlowe%20Fuel%20%26%20Go",
+    "path": "manager__members/dim=merchant_name_value=Alderlowe_Fuel___Go-939c7965.json"
+  },
+  {
+    "url": "/api/manager/cohort_members?bucket=week&value=2026-W21",
+    "path": "manager__cohort_members/bucket=week_value=2026-W21-bf87d047.json"
+  },
+  {
+    "url": "/api/transactions?terminal_id=TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "path": "transactions/terminal_id=TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT-043434ee.json"
+  }
+]

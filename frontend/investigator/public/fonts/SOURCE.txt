@@ -1,0 +1,28 @@
+Where the investigator app's font files come from
+=================================================
+
+The stylesheet (frontend/investigator/src/index.css) declares three families. The project and
+the version below are the ones each font file states in its own name table, read on 2026-11-14.
+All three families are under the SIL Open Font License 1.1.
+
+Atkinson Hyperlegible Next
+  Files:    atkinson-latin.woff2, atkinson-latin-ext.woff2 (version 2.001)
+  Added:    2026-06-05
+  Project:  https://github.com/googlefonts/atkinson-hyperlegible-next
+  Licence text: OFL-AtkinsonNext.txt. Its first line is the copyright line the two font files
+  carry. The lines after it are the same as in OFL-AtkinsonMono.txt. The project's own copy is
+  the file OFL.txt in its repository.
+
+Atkinson Hyperlegible Mono
+  File:     atkinson-mono-var.woff2 (version 2.001)
+  Added:    2026-06-15
+  Project:  https://github.com/googlefonts/atkinson-hyperlegible-next-mono
+  Licence text: OFL-AtkinsonMono.txt
+
+Hanken Grotesk
+  File:     hanken-grotesk-var.woff2 (version 3.014)
+  Added:    2026-06-15
+  Project:  https://github.com/marcologous/hanken-grotesk
+  Licence text: OFL-HankenGrotesk.txt
+
+Not recorded: the address each file was downloaded from.

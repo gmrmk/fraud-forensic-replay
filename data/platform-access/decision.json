@@ -1,0 +1,176 @@
+[
+ {
+  "id": "dec-0001",
+  "org_id": "org-6861",
+  "event_ids": [
+   "ke-0004",
+   "us-02517"
+  ],
+  "target_label": "Varnholt Labs \u00b7 Austin, US",
+  "status": "FAIL",
+  "outcome": "KEY TAKEOVER",
+  "note": "Console takeover. New device K7P2M9XQ4TLD on AS64511 (Amsterdam hosting) signed in to seat-3654 at Mon Jun 8, 8:02 AM CDT; API key key-0JRWY4Z3 created at 8:05 AM CDT. From Mon Jun 8, 5:00 PM CDT the key spent $2,033.97 in 6 hours on AS64510 (Singapore), up to 56 times the organisation's median hour. Revoke key-0JRWY4Z3 and expire the seat's console sessions. Organisation not suspended.",
+  "decided_by": "investigator",
+  "decided_at": "2026-06-09T14:40:00+00:00",
+  "lat": 30.2825,
+  "lng": -97.7292
+ },
+ {
+  "id": "dec-0002",
+  "org_id": "org-2211",
+  "event_ids": [
+   "ke-0005",
+   "us-02509"
+  ],
+  "target_label": "Quenby Robotics \u00b7 Boston, US",
+  "status": "FAIL",
+  "outcome": "KEY TAKEOVER",
+  "note": "Console takeover. New device K7P2M9XQ4TLD on AS64511 (Amsterdam hosting) signed in to seat-5431 at Mon Jun 8, 8:19 AM CDT; API key key-GVEM1HCP created at 8:22 AM CDT. From Mon Jun 8, 5:00 PM CDT the key spent $5,000.59 in 6 hours on AS64510 (Singapore), up to 57 times the organisation's median hour. Revoke key-GVEM1HCP and expire the seat's console sessions. Organisation not suspended.",
+  "decided_by": "investigator",
+  "decided_at": "2026-06-09T14:43:30+00:00",
+  "lat": 42.3647,
+  "lng": -71.055
+ },
+ {
+  "id": "dec-0003",
+  "org_id": "org-6343",
+  "event_ids": [
+   "ke-0006",
+   "us-02515"
+  ],
+  "target_label": "Ostwick Logic \u00b7 Chicago, US",
+  "status": "FAIL",
+  "outcome": "KEY TAKEOVER",
+  "note": "Console takeover. New device K7P2M9XQ4TLD on AS64511 (Amsterdam hosting) signed in to seat-7259 at Mon Jun 8, 8:37 AM CDT; API key key-JIZRZ377 created at 8:42 AM CDT. From Mon Jun 8, 5:00 PM CDT the key spent $1,027.48 in 6 hours on AS64510 (Singapore), up to 56 times the organisation's median hour. Revoke key-JIZRZ377 and expire the seat's console sessions. Organisation not suspended.",
+  "decided_by": "investigator",
+  "decided_at": "2026-06-09T14:47:00+00:00",
+  "lat": 41.883,
+  "lng": -87.6442
+ },
+ {
+  "id": "dec-0004",
+  "org_id": "org-3151",
+  "event_ids": [
+   "ke-0007",
+   "us-02510"
+  ],
+  "target_label": "Mirelowe Software \u00b7 Mexico City, MX",
+  "status": "FAIL",
+  "outcome": "KEY TAKEOVER",
+  "note": "Console takeover. New device K7P2M9XQ4TLD on AS64511 (Amsterdam hosting) signed in to seat-9328 at Mon Jun 8, 8:58 AM CDT; API key key-H7UC5SAC created at 9:01 AM CDT. From Mon Jun 8, 5:00 PM CDT the key spent $3,196.26 in 6 hours on AS64510 (Singapore), up to 54 times the organisation's median hour. Revoke key-H7UC5SAC and expire the seat's console sessions. Organisation not suspended.",
+  "decided_by": "investigator",
+  "decided_at": "2026-06-09T14:50:30+00:00",
+  "lat": 19.4165,
+  "lng": -99.153
+ },
+ {
+  "id": "dec-0005",
+  "org_id": "org-9407",
+  "event_ids": [
+   "ke-0008",
+   "us-02525"
+  ],
+  "target_label": "Lindqvale Systems \u00b7 London, GB",
+  "status": "FAIL",
+  "outcome": "KEY TAKEOVER",
+  "note": "Console takeover. New device K7P2M9XQ4TLD on AS64511 (Amsterdam hosting) signed in to seat-6844 at Mon Jun 8, 9:16 AM CDT; API key key-DJ4NIWMU created at 9:21 AM CDT. From Mon Jun 8, 5:00 PM CDT the key spent $2,587.59 in 6 hours on AS64510 (Singapore), up to 56 times the organisation's median hour. Revoke key-DJ4NIWMU and expire the seat's console sessions. Organisation not suspended.",
+  "decided_by": "investigator",
+  "decided_at": "2026-06-09T14:54:00+00:00",
+  "lat": 51.5187,
+  "lng": -0.138
+ },
+ {
+  "id": "dec-0006",
+  "org_id": "org-9037",
+  "event_ids": [
+   "ke-0009",
+   "us-02522"
+  ],
+  "target_label": "Tannoway Data \u00b7 Paris, FR",
+  "status": "FAIL",
+  "outcome": "KEY TAKEOVER",
+  "note": "Console takeover. New device K7P2M9XQ4TLD on AS64511 (Amsterdam hosting) signed in to seat-9451 at Mon Jun 8, 9:35 AM CDT; API key key-AAG01PW8 created at 9:38 AM CDT. From Mon Jun 8, 5:00 PM CDT the key spent $2,703.45 in 6 hours on AS64510 (Singapore), up to 55 times the organisation's median hour. Revoke key-AAG01PW8 and expire the seat's console sessions. Organisation not suspended.",
+  "decided_by": "investigator",
+  "decided_at": "2026-06-09T14:57:30+00:00",
+  "lat": 48.8748,
+  "lng": 2.3713
+ },
+ {
+  "id": "dec-0007",
+  "org_id": "org-8156",
+  "event_ids": [
+   "ke-0010",
+   "us-02518"
+  ],
+  "target_label": "Wexcombe AI \u00b7 Stockholm, SE",
+  "status": "FAIL",
+  "outcome": "KEY TAKEOVER",
+  "note": "Console takeover. New device K7P2M9XQ4TLD on AS64511 (Amsterdam hosting) signed in to seat-3118 at Mon Jun 8, 9:52 AM CDT; API key key-0ZGP60Z2 created at 9:58 AM CDT. From Mon Jun 8, 5:00 PM CDT the key spent $1,945.48 in 6 hours on AS64510 (Singapore), up to 58 times the organisation's median hour. Revoke key-0ZGP60Z2 and expire the seat's console sessions. Organisation not suspended.",
+  "decided_by": "investigator",
+  "decided_at": "2026-06-09T15:01:00+00:00",
+  "lat": 59.3398,
+  "lng": 18.0667
+ },
+ {
+  "id": "dec-0008",
+  "org_id": "org-6577",
+  "event_ids": [
+   "ke-0011",
+   "us-02516"
+  ],
+  "target_label": "Fallowden Robotics \u00b7 Nairobi, KE",
+  "status": "FAIL",
+  "outcome": "KEY TAKEOVER",
+  "note": "Console takeover. New device K7P2M9XQ4TLD on AS64511 (Amsterdam hosting) signed in to seat-3747 at Mon Jun 8, 10:21 AM CDT; API key key-PFYL6NSC created at 10:24 AM CDT. From Mon Jun 8, 5:00 PM CDT the key spent $2,332.89 in 6 hours on AS64510 (Singapore), up to 56 times the organisation's median hour. Revoke key-PFYL6NSC and expire the seat's console sessions. Organisation not suspended.",
+  "decided_by": "investigator",
+  "decided_at": "2026-06-09T15:04:30+00:00",
+  "lat": -1.2974,
+  "lng": 36.8293
+ },
+ {
+  "id": "dec-0009",
+  "org_id": "org-8191",
+  "event_ids": [
+   "ke-0012",
+   "us-02519"
+  ],
+  "target_label": "Jessamere AI \u00b7 Tokyo, JP",
+  "status": "FAIL",
+  "outcome": "KEY TAKEOVER",
+  "note": "Console takeover. New device K7P2M9XQ4TLD on AS64511 (Amsterdam hosting) signed in to seat-3856 at Mon Jun 8, 10:41 AM CDT; API key key-7U7C54GW created at 10:45 AM CDT. From Mon Jun 8, 5:00 PM CDT the key spent $1,969.54 in 6 hours on AS64510 (Singapore), up to 54 times the organisation's median hour. Revoke key-7U7C54GW and expire the seat's console sessions. Organisation not suspended.",
+  "decided_by": "investigator",
+  "decided_at": "2026-06-09T15:08:00+00:00",
+  "lat": 35.664,
+  "lng": 139.6633
+ },
+ {
+  "id": "dec-0010",
+  "org_id": "org-2482",
+  "event_ids": [
+   "ke-0002"
+  ],
+  "target_label": "Sorrelby Analytics \u00b7 Manchester, GB",
+  "status": "PASS",
+  "outcome": "PASSED",
+  "note": "Admin confirmed by callback on the number on file: new laptop on the company VPN (AS64500). Key key-IG5IQ5U4 left active.",
+  "decided_by": "investigator",
+  "decided_at": "2026-06-09T15:20:00+00:00",
+  "lat": 53.4628,
+  "lng": -2.2355
+ },
+ {
+  "id": "dec-0011",
+  "org_id": "org-6103",
+  "event_ids": [
+   "us-01582"
+  ],
+  "target_label": "Dellowmere Systems \u00b7 Tel Aviv, IL",
+  "status": "WAITING",
+  "outcome": "WAITING",
+  "note": "Planned batch run reported by the organisation's on-call contact, not yet confirmed by an admin. Key key-7QF2M9XA spent $304.81 in 3 hours from Thu Jun 4, 4:00 PM CDT on AS64498, the network it has used all week. Key left active.",
+  "decided_by": "investigator",
+  "decided_at": "2026-06-09T15:24:00+00:00",
+  "lat": 32.0949,
+  "lng": 34.7944
+ }
+]

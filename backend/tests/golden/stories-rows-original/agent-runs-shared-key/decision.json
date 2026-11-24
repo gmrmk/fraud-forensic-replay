@@ -1,0 +1,16 @@
+[
+ {
+  "id": "dc-0001",
+  "org_id": "org-I27O5V",
+  "event_ids": [
+   "kr-0001",
+   "kr-0003"
+  ],
+  "target_label": "Ashenby Works",
+  "status": "WAITING",
+  "outcome": "FOR REVIEW",
+  "note": "5 runs made 94,200 tool calls and met 236 safeguard events: 163 intervened and 73 fell back. One of 4 keys reached 2 workspaces, with 78,410 requests in a non-health workspace and 26 in a health workspace.",
+  "decided_by": "investigator",
+  "decided_at": "2026-11-11T14:12:00+00:00"
+ }
+]
