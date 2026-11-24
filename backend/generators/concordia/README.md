@@ -104,7 +104,7 @@ Marcus.
 **Shape (2026-06-10 realism program, research-grounded):** a 30-day, 134-event pack -
 93 card transactions on her PROFILES weekly rhythm (coffee 5x/week, Nevgate commutes,
 groceries, restaurants, six subscriptions on fixed days), 10 Tamsinmere transfers
-(~$45 median, including the canon $47 to Jamie K. on Day 25), 26 logins on her two
+(~$40 median, including the canon $47 to Jamie K. on Day 25), 26 logins on her two
 trusted devices, then the Day-28 kill chain in one session: a CLEAN takeover login
 (challenge_passed with the phished OTP on a never-seen device from a Frankfurt
 datacenter exit), email change (+7 min), beneficiary add (+9 min), a $4,200 wire (+13 min), and

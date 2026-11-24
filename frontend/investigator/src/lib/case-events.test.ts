@@ -4,7 +4,16 @@
  * capsules (a decision mapping) are not steps.
  */
 import { describe, it, expect } from "vitest";
-import { caseStepEvents, selectionId } from "./case-events";
+import { caseStepEvents, dotKinds, selectionId } from "./case-events";
+import cardFraudRaw from "../../../../backend/scenarios/card-fraud.scenario.json?raw";
+import cardFraudConcordiaRaw from "../../../../backend/scenarios/card-fraud-concordia.scenario.json?raw";
+import priyaAtoRaw from "../../../../backend/scenarios/priya-ato.scenario.json?raw";
+import volumeStepRaw from "../../../../backend/scenarios/volume-step.scenario.json?raw";
+import keyManyNetworksRaw from "../../../../backend/scenarios/key-many-networks.scenario.json?raw";
+import agentRunsSharedKeyRaw from "../../../../backend/scenarios/agent-runs-shared-key.scenario.json?raw";
+import seatsTwoNetworksRaw from "../../../../backend/scenarios/seats-two-networks.scenario.json?raw";
+import seatFailedSigninsRaw from "../../../../backend/scenarios/seat-failed-signins.scenario.json?raw";
+import platformAccessRaw from "../../../../backend/scenarios/platform-access.scenario.json?raw";
 import { manifestRowToEntity } from "./adapters/manifest-row";
 import { verdictNode } from "./verdict-fixtures";
 import type { ScenarioNode } from "./scenarios";
@@ -18,6 +27,24 @@ const loadNode = node("load", { magnitude: "weight" });
 const at = (hm: string) => `2026-06-08T${hm}:00-05:00`;
 const tx = (id: string, hm: string, fraud = 0) => ({ id, timestamp: at(hm), is_fraud: fraud }) as unknown as Transaction;
 const login = (id: string, hm: string) => ({ id, timestamp: at(hm) }) as unknown as LoginEvent;
+
+describe("dotKinds over the shipped manifests", () => {
+  const nodesOf = (raw: string) => (JSON.parse(raw) as { nodes: ScenarioNode[] }).nodes;
+
+  it("holds no kind for the card stories, whose only manifest kind is a placed decision kind", () => {
+    for (const raw of [cardFraudRaw, cardFraudConcordiaRaw, priyaAtoRaw]) expect([...dotKinds(nodesOf(raw))]).toEqual([]);
+  });
+
+  it("holds the dot kinds of each story of its own kinds, and no magnitude or decision kind", () => {
+    const stories = [volumeStepRaw, keyManyNetworksRaw, agentRunsSharedKeyRaw, seatsTwoNetworksRaw, seatFailedSigninsRaw, platformAccessRaw];
+    for (const raw of stories) {
+      const nodes = nodesOf(raw);
+      const dots = dotKinds(nodes);
+      expect(dots.size).toBeGreaterThan(0);
+      for (const n of nodes) if (n.magnitude || n.decision) expect(dots.has(n.kind)).toBe(false);
+    }
+  });
+});
 
 describe("caseStepEvents", () => {
   it("merges every dot kind into one list in time order, ties by id, each with its navigate target", () => {

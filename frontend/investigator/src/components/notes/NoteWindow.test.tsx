@@ -14,6 +14,7 @@ import { when } from "../../lib/time-words";
 import { noteOpenedFrom } from "../../lib/window-focus";
 import { VISA, bodyOf, makeNote } from "../../lib/notes/test-fixtures";
 import { CONTEXT, NOTE_TIME, SCENARIO, fakeBacking, fakeClipboard } from "./test-support";
+import type { Note, NoteDraft } from "../../lib/notes/types";
 
 const TIME = when(NOTE_TIME);
 
@@ -349,6 +350,126 @@ describe("NoteWindow: it asks before it closes with changes", () => {
     });
     expect(useNotesStore.getState().notes).toHaveLength(1);
     expect(noteWindow(id)).toBeUndefined();
+  });
+});
+
+describe("NoteWindow: a Save that waits for the store", () => {
+  beforeEach(reset);
+
+  /** A backing whose create waits until `release` is called, and counts the calls that reach it. */
+  function heldBacking() {
+    const backing = fakeBacking();
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let asked = 0;
+    const held = {
+      ...backing,
+      create: async (draft: NoteDraft) => {
+        asked += 1;
+        await gate;
+        return backing.create(draft);
+      },
+    };
+    useNotesStore.setState({ backing: held });
+    return {
+      asked: () => asked,
+      settle: async () => {
+        await act(async () => {
+          release();
+          await new Promise((r) => setTimeout(r, 0));
+        });
+      },
+    };
+  }
+
+  it("a second press of Save while the first waits makes no second note", async () => {
+    const held = heldBacking();
+    const id = openDraft();
+    layer();
+    await paste("Seen at the terminal.");
+    await press("Save the note.");
+    await press("Save the note.");
+    await held.settle();
+    expect(held.asked()).toBe(1);
+    expect(useNotesStore.getState().notes).toHaveLength(1);
+    expect(noteWindow(id)).toBeUndefined();
+  });
+
+  it("text typed while a new note's Save waits keeps the window open, bound to the new note and marked changed", async () => {
+    const held = heldBacking();
+    const id = openDraft();
+    layer();
+    await paste("First words.");
+    await press("Save the note.");
+    await paste(" More words.");
+    await held.settle();
+    const notes = useNotesStore.getState().notes;
+    expect(notes).toHaveLength(1);
+    expect(JSON.stringify(notes[0].body)).not.toContain("More words.");
+    const w = noteWindow(id);
+    expect(w && w.kind === "note" && w.noteId).toBe(notes[0].id);
+    expect(w && w.kind === "note" && w.dirty).toBe(true);
+    expect(textbox().textContent).toContain("More words.");
+  });
+});
+
+describe("NoteWindow: a notes file loaded while the window is open", () => {
+  beforeEach(reset);
+  const NOTE_ID = "note-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeee1";
+
+  function openSaved() {
+    const note = makeNote({ id: NOTE_ID, colour: "r1", body: bodyOf("Old words.") });
+    const backing = fakeBacking();
+    backing.rows.set(note.id, note);
+    useNotesStore.setState({ backing, notes: [note] });
+    act(() => {
+      usePivotStore.getState().openNote({ noteId: note.id }, { x: 80, y: 80 });
+    });
+    layer();
+    return { note, backing };
+  }
+  /** What a loaded file does to the store: the backing holds the file's copy and the store lists again. */
+  async function loadFile(backing: ReturnType<typeof fakeBacking>, note: Note) {
+    backing.rows.set(note.id, note);
+    await act(async () => {
+      await useNotesStore.getState().load(SCENARIO);
+    });
+  }
+
+  it("a window with no change takes the loaded text and fields, and its Save writes the loaded copy", async () => {
+    const { note, backing } = openSaved();
+    await loadFile(backing, { ...note, colour: "r3", body: bodyOf("Loaded words.") });
+    expect(textbox().textContent).toBe("Loaded words.");
+    await press("Save the note.");
+    expect(backing.rows.get(NOTE_ID)).toMatchObject({ colour: "r3", body: bodyOf("Loaded words.") });
+  });
+
+  it("taking the loaded copy leaves focus where it was", async () => {
+    const { note, backing } = openSaved();
+    const elsewhere = document.createElement("button");
+    document.body.appendChild(elsewhere);
+    elsewhere.focus();
+    await loadFile(backing, { ...note, body: bodyOf("Loaded words.") });
+    expect(textbox().textContent).toBe("Loaded words.");
+    expect(document.activeElement).toBe(elsewhere);
+    elsewhere.remove();
+  });
+
+  it("a window with changes of its own keeps them when a file is loaded", async () => {
+    const { note, backing } = openSaved();
+    await paste(" Mine.");
+    await loadFile(backing, { ...note, body: bodyOf("Loaded words.") });
+    expect(textbox().textContent).toContain("Mine.");
+  });
+
+  it("the window's own Save keeps its editor", async () => {
+    openSaved();
+    const before = textbox();
+    await press("Save the note.");
+    expect(textbox()).toBe(before);
+    expect(status().textContent).toBe("Saved.");
   });
 });
 

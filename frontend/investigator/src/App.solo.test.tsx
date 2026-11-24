@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { act, render, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { act, render, waitFor, within } from "@testing-library/react";
+import type { ComponentProps, ReactNode } from "react";
 import appSource from "./App.tsx?raw";
 import App from "./App";
+import { LayerPanels } from "./components/LayerPanels";
+import { kindSwitchWords } from "./lib/tooltip-words/layers";
 import { useSolo } from "./store/solo";
 import { useSchema } from "./store/schema";
 import { usePlayhead } from "./store/playhead";
@@ -45,7 +47,9 @@ vi.mock("./components/MapMenus", () => ({
   },
 }));
 vi.mock("./store/decisions", () => ({ useDecisions: () => ({ decisions: seen.decisions, error: null }) }));
-vi.mock("./components/ui", () => ({
+// The rest of the module stays real, so the Layers menu itself can be drawn from the props App gives it.
+vi.mock("./components/ui", async (original) => ({
+  ...(await original<typeof import("./components/ui")>()),
   Panel: ({ children }: { children?: ReactNode }) => children ?? null,
   Eyebrow: () => null,
 }));
@@ -208,6 +212,62 @@ describe("App: a soloed value narrows the globe and the ticker", () => {
     expect(ids(seen.globe?.transactions)).toEqual(["a1", "f1", "f2", "f3"]);
     expect(ids(seen.stack?.tickerItems)).toEqual([...ALL_TICKER].sort());
     expect(seen.globe?.paths.find((p) => p.kind === "fraud")?.nodes).toHaveLength(3);
+  });
+});
+
+describe("App: a soloed value narrows the Layers menu's manifest kinds", () => {
+  it("gives the menu the soloed manifest records to count and the whole lists for the totals", async () => {
+    const widget: ScenarioNode = { ...node("widget"), source: "sql", query: "q", pivotable: ["session_id"] };
+    const rows = [
+      { id: "w1", timestamp: "2026-05-20T08:05:00Z", session_id: "S1" },
+      { id: "w2", timestamp: "2026-05-20T08:35:00Z", session_id: "S2" },
+    ];
+    const read = fetch as unknown as { mockImplementation: (f: (input: RequestInfo | URL) => unknown) => void };
+    read.mockImplementation(async (input) => {
+      const path = String(input).split("?")[0];
+      return { ok: true, status: 200, json: async () => (path === "/api/entities" ? rows : (DATA[path] ?? [])) };
+    });
+    useSchema.getState().setActive("solo-test", [...NODES, widget]);
+    render(<App />);
+    const menus = () => seen.menus as unknown as { genericByKind?: Record<string, Rows[]>; soloEntities?: Rows[] };
+    await waitFor(() => expect(ids(menus().genericByKind?.widget)).toEqual(["w1", "w2"]));
+    await solo("session_id", "S1");
+    expect(ids(menus().soloEntities)).toEqual(["w1"]);
+    expect(ids(menus().genericByKind?.widget)).toEqual(["w1", "w2"]);
+  });
+
+  it("counts a placed decision as reached when the solo keeps the event it works, as the map keeps its capsule", async () => {
+    // The decision pivots on the card, not on the merchant the solo names, so the solo does not keep it by its fields.
+    const ruling: ScenarioNode = {
+      ...node("ruling"),
+      label: "Ruling",
+      source: "sql",
+      query: "q",
+      coords: { lat: "lat", lng: "lng" },
+      pivotable: ["card_id"],
+      decision: { status: "status", outcome: "status", note: "status", actor: "status", target: "status", key: "card_id", event: "event_id" },
+    };
+    const rows = [
+      { id: "r1", timestamp: "2026-05-20T10:30:00Z", lat: 6.4, lng: 3.5, card_id: "card-1", status: "FAIL", event_id: "f1" },
+      { id: "r2", timestamp: "2026-05-20T12:30:00Z", lat: 6.4, lng: 3.7, card_id: "card-1", status: "PASS", event_id: "f3" },
+    ];
+    const read = fetch as unknown as { mockImplementation: (f: (input: RequestInfo | URL) => unknown) => void };
+    read.mockImplementation(async (input) => {
+      const path = String(input).split("?")[0];
+      return { ok: true, status: 200, json: async () => (path === "/api/entities" ? rows : (DATA[path] ?? [])) };
+    });
+    useSchema.getState().setActive("solo-test", [...NODES, ruling]);
+    render(<App />);
+    const menus = () => seen.menus as unknown as ComponentProps<typeof LayerPanels>;
+    await waitFor(() => expect(ids(menus().genericByKind?.ruling)).toEqual(["r1", "r2"]));
+    await solo("merchant_name", "Lekki ATM");
+    // The menu is drawn from what App gives it; the stores it reads are the ones App filled.
+    const menu = render(<LayerPanels {...menus()} />);
+    // The row is found by its tooltip, since the label's own element is a stub in this file.
+    const row = within(menu.container)
+      .getAllByRole("button")
+      .find((b) => b.getAttribute("data-tip") === kindSwitchWords("Ruling").join("\n"));
+    expect(row?.textContent).toContain("1 / 2");
   });
 });
 

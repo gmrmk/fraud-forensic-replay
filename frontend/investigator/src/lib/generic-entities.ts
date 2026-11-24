@@ -58,17 +58,21 @@ const asDrawRecord = (entity: Entity) => drawRecordOf({ kind: "entity", entity }
  * kind or value reads 0 of its total. When the node declares a filter, one entry per distinct value of
  * its field, by total descending and then by value, each counted the same way. The values are grouped
  * in a Map, so a value named like an inherited key is an ordinary value. `windowed` (in `d`) is false
- * until the playhead bounds load, when everything counts.
+ * until the playhead bounds load, when everything counts. With `kept` (the records a solo keeps), only
+ * kept records count as reached; the totals and the values stay those of the whole lists.
  */
 export function genericCounts(
   nodes: readonly ScenarioNode[],
   byKind: Record<string, Entity[]>,
   d: DrawInputs,
+  kept?: ReadonlySet<Entity>,
 ): GenericCount[] {
+  // Only the records a solo keeps count as reached, while each total stays that of the whole list.
+  const reached = (list: Entity[]): number =>
+    drawCounts((kept ? list.filter((e) => kept.has(e)) : list).map(asDrawRecord), d).reached;
   return nodes.filter(isGenericNode).map((n) => {
     // Own keys only: a kind named like an inherited key (constructor) with no list yet is empty.
     const all = Object.hasOwn(byKind, n.kind) ? byKind[n.kind] : [];
-    const c = drawCounts(all.map(asDrawRecord), d);
     const filter = filterOf(n);
     const values: ValueCount[] = [];
     if (filter !== null) {
@@ -82,12 +86,11 @@ export function genericCounts(
       // A decision kind's status field takes its tone from the decision mapping, read through decisionOf.
       const toned = n.decision !== undefined && n.decision.status === filter.field;
       for (const [value, group] of groups) {
-        const g = drawCounts(group.map(asDrawRecord), d);
-        values.push({ value, visible: g.reached, total: g.all, tone: toned ? (decisionOf(group[0], n)?.tone ?? null) : null });
+        values.push({ value, visible: reached(group), total: group.length, tone: toned ? (decisionOf(group[0], n)?.tone ?? null) : null });
       }
       values.sort((a, b) => b.total - a.total || a.value.localeCompare(b.value));
     }
-    return { kind: n.kind, label: n.label, palette: n.palette, visible: c.reached, total: c.all, filter, values };
+    return { kind: n.kind, label: n.label, palette: n.palette, visible: reached(all), total: all.length, filter, values };
   });
 }
 

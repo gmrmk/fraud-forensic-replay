@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from _rule_fixtures import _GEO_RULE, _seed_full_signature, _seed_impossible_pair
+from fastapi.testclient import TestClient
 
 import main
 import rules as rules_module
@@ -137,6 +138,27 @@ def test_decisions_endpoint_degrades_to_empty_on_error(tmp_path, monkeypatch):
 
     monkeypatch.setattr(main.rules_module, "evaluate", _boom)
     assert main.decisions() == []
+
+
+def test_decisions_endpoint_takes_its_focal_from_the_manifest_alone(tmp_path, monkeypatch):
+    """A card, an account or a case in the query does not change the focal the rules see."""
+    real_dir = Path(main.__file__).resolve().parent / "scenarios"
+    for _p in real_dir.glob("*.scenario.json"):
+        init_db(sr.load_manifest(_p, base_dir=tmp_path).db_path)
+    sr.init_registry(real_dir, base_dir=tmp_path, default_id="card-fraud")
+    seen: list[dict | None] = []
+
+    def _capture(conn, rule_defs, focal=None):
+        seen.append(focal)
+        return []
+
+    monkeypatch.setattr(main.rules_module, "evaluate", _capture)
+    resp = TestClient(main.app).get(
+        "/api/decisions?card_id=card-other&account_id=acct-other&case=priya"
+    )
+
+    assert resp.status_code == 200
+    assert seen == [sr.get_active().focal]
 
 
 def test_decisions_endpoint_returns_impossible_travel(tmp_path):

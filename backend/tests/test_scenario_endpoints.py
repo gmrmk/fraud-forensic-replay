@@ -197,42 +197,6 @@ def test_entities_non_sql_kind_400(tmp_path):
     assert ei.value.status_code == 400
 
 
-def test_portfolio_summary_counts_population_shape(tmp_path):
-    """/api/portfolio/summary counts the ACTIVE db's distinct cards and total
-    transactions -- data-derived, never a hardcoded per-scenario flag."""
-    d = tmp_path / "scenarios"
-    d.mkdir()
-    dbfile = tmp_path / "data" / "p.db"
-    pack = {
-        "id": "t",
-        "label": "T",
-        "db": str(dbfile.relative_to(tmp_path)),
-        "nodes": [{"kind": "auth", "source": "sql", "query": "SELECT id FROM transactions"}],
-        "arrows": [],
-    }
-    (d / "t.scenario.json").write_text(json.dumps(pack), encoding="utf-8")
-    init_db(dbfile)
-    conn = connect(dbfile)
-    try:
-        conn.execute("PRAGMA foreign_keys = OFF")
-        for tid, card in [("a", "card-1"), ("b", "card-1"), ("c", "card-2")]:
-            conn.execute(
-                "INSERT INTO transactions "
-                "(id, card_id, account_id, timestamp, amount, merchant_name, "
-                "merchant_lat, merchant_lng, mcc, category, balance_after, is_fraud) "
-                "VALUES (?, ?, 'ac1', '2026-01-01T00:00:00Z', 10.0, 'M', 1, 2, "
-                "'5411', 'grocery', 10.0, 0)",
-                (tid, card),
-            )
-        conn.commit()
-    finally:
-        conn.close()
-    sr.init_registry(d, base_dir=tmp_path, default_id="t")
-
-    out = main.portfolio_summary()
-    assert out == {"cards": 2, "transactions": 3}
-
-
 def test_card_manifest_auth_matches_direct_query(tmp_path):
     """The card manifest's 'auth' query returns exactly the non-fraud
     transactions, and 'fraud' the fraud ones -- the retrofit must be

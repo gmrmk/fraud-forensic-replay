@@ -1,6 +1,6 @@
 import { useClock } from "../store/clock";
 import { useData } from "../store/data";
-import { visibleTxns, currentBalance, fraudAlerted, availableCredit, lagosAlert } from "../lib/derive";
+import { visibleTxns, currentBalance, fraudAlerted, availableCredit, lagosAlert, HOUSTON } from "../lib/derive";
 import { formatMoney } from "../lib/money";
 import { BalanceOdometer } from "../components/BalanceOdometer";
 import { CreditCard } from "../components/CreditCard";
@@ -12,7 +12,7 @@ function groupByDay(txns: ReturnType<typeof visibleTxns>) {
   const groups = new Map<string, typeof txns>();
   for (const tx of txns) {
     const key = new Date(tx.timestamp).toLocaleDateString("en-US", {
-      weekday: "short", month: "short", day: "numeric",
+      weekday: "short", month: "short", day: "numeric", timeZone: HOUSTON,
     });
     const existing = groups.get(key) ?? [];
     existing.push(tx);

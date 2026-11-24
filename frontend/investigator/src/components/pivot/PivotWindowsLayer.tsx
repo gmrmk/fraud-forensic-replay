@@ -73,13 +73,15 @@ export function PivotWindowsLayer({ map, decisions, context }: Props) {
   // Subscribe only while something is node-anchored: screen windows never
   // consume projection output, so camera events would re-render for nothing
   // (Task 6 review M2).
+  // A change of shape moves no camera, so the library's projectiontransition re-projects the
+  // windows too. Not "render": the ambient pulse fires it on every frame at rest.
   useEffect(() => {
     if (!map || !anyFlagged) return;
     map.on("move", forceRender);
-    map.on("render", forceRender);
+    map.on("projectiontransition", forceRender);
     return () => {
       map.off("move", forceRender);
-      map.off("render", forceRender);
+      map.off("projectiontransition", forceRender);
     };
   }, [map, anyFlagged]);
 

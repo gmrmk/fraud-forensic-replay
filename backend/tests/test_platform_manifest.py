@@ -191,9 +191,9 @@ EXPECTED_ROWS = {
     "volume-step": ("workspace_id", None, None, "Workspace", None),
     "seat-failed-signins": ("seat_id", None, "network_id", "Seat", "Network"),
 }
-UNDECLARED = ("card-fraud-concordia", "population")
-# The two manifests the public copy leaves out: a test that reads one skips when it is absent.
-LEFT_OUT = ("card-fraud-concordia", "population")
+UNDECLARED = ("card-fraud-concordia",)
+# The manifest the public copy leaves out: a test that reads it skips when it is absent.
+LEFT_OUT = ("card-fraud-concordia",)
 
 
 def _raw(pack_id: str) -> dict:
@@ -633,8 +633,6 @@ def test_a_pack_that_declares_nothing_keeps_todays_bar(pack_id):
     assert not {"rows", "fields", "lanes"} & set(_raw(pack_id))
 
 
-# The population pack's database is built by a seed and is not in the repository, so it cannot be
-# selected here; its file is covered by the test above.
 @pytest.mark.parametrize("pack_id", [*EXPECTED_ROWS, "card-fraud-concordia"])
 def test_the_endpoint_serves_the_root_keys_unchanged(client, pack_id):
     if pack_id in LEFT_OUT:

@@ -204,6 +204,24 @@ describe("ScenarioSwitcher", () => {
     expect(selectCalls).toHaveLength(1);
   });
 
+  // A reload the visitor cancels (Stay on the leave prompt) returns to the page.
+  it("a reload that returns leaves the menu ready for the next pick", async () => {
+    const fetchMock = stubFetch();
+    const reload = vi.fn();
+    render(<ScenarioSwitcher reload={reload} />);
+    const trigger = await screen.findByRole("button", { name: /scenario/i });
+    fireEvent.click(trigger);
+    fireEvent.click(await screen.findByRole("option", { name: /Concordia-generated/ }));
+    await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(trigger.textContent).not.toMatch(/switching/));
+    fireEvent.click(await screen.findByRole("option", { name: /Concordia-generated/ }));
+    await waitFor(() => expect(reload).toHaveBeenCalledTimes(2));
+    const selectCalls = fetchMock.mock.calls.filter(
+      ([url]) => url === "/api/scenario/select",
+    );
+    expect(selectCalls).toHaveLength(2);
+  });
+
   it("tags the header as synthetic data (D1)", async () => {
     stubFetch();
     render(<ScenarioSwitcher reload={vi.fn()} />);

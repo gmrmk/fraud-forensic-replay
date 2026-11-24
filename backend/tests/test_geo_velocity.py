@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from _rule_fixtures import _GEO_RULE, _insert_tx, _seed_full_signature, _seed_impossible_pair
 
 import main
@@ -106,6 +107,28 @@ def test_evidence_chain_surfaces_the_signature(tmp_path):
     # the STIP + precursor rows carry an entity_ref back to the globe
     assert any(e.get("entity_ref") == "lag1" for e in d.evidence)
     assert any(e.get("entity_ref") == "micro" for e in d.evidence)
+
+
+@pytest.mark.parametrize(
+    ("code", "words"),
+    [(None, "approved"), ("00", "approved"), ("05", "declined")],
+)
+def test_stip_line_words_the_landing_rows_own_response_code(tmp_path, code, words):
+    """The Auth routing line says what the landing row's response code says: a stand-in
+    approval for "00" or the column's default, a stand-in decline for any other code."""
+    dbfile = tmp_path / "data" / "d.db"
+    _seed_impossible_pair(dbfile)
+    conn = connect(dbfile)
+    if code is not None:
+        conn.execute("UPDATE transactions SET auth_response_code = ? WHERE id = 'lag1'", (code,))
+        conn.commit()
+    try:
+        d = rules_module._eval_geo_velocity(conn, _GEO_RULE)[0]
+    finally:
+        conn.close()
+    (line,) = [e for e in d.evidence if e["label"] == "Auth routing"]
+    assert line["value"] == f"STIP - issuer offline, stand-in {words}"
+    assert line["entity_ref"] == "lag1"
 
 
 def test_card_manifest_declares_impossible_travel_rule(tmp_path):

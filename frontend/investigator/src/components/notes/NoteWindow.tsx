@@ -40,7 +40,7 @@ import { charCount, emptyBody } from "../../lib/notes/body";
 import { categoryExists, categoryList, normalizeCategoryName } from "../../lib/notes/categories";
 import { colourCss } from "../../lib/notes/colours";
 import { refusesText } from "../../lib/notes/guard";
-import { LIMITS, type ColourSlot, type Decision, type NoteErrorCode, type NoteLink } from "../../lib/notes/types";
+import { LIMITS, type ColourSlot, type Decision, type Note, type NoteErrorCode, type NoteLink } from "../../lib/notes/types";
 import { BUTTONS, CATEGORY, CATEGORY_ADD, CATEGORY_FIELD_BUTTONS, CLOSE, DELETE, HINT, LINK, SAVE_TIP, STATUS, noteWindowName } from "../../lib/tooltip-words/notes";
 
 const FALLBACK = "var(--text-faint-on-panel)";
@@ -84,6 +84,13 @@ interface Fields {
   link: NoteLink | null;
 }
 
+const fieldsOf = (note: Note | null, seedLink: NoteLink | null): Fields => ({
+  colour: note?.colour ?? "r1",
+  category: note?.category ?? "Note",
+  decision: note?.decision ?? "none",
+  link: note ? note.link : seedLink,
+});
+
 export function NoteWindow({ window: w, context, screenPos, dimmed, onDragTo }: Props) {
   const note = useNotesStore((s) => (w.noteId ? (s.notes.find((n) => n.id === w.noteId) ?? null) : null));
   const customCategories = useNotesStore((s) => s.customCategories);
@@ -103,14 +110,13 @@ export function NoteWindow({ window: w, context, screenPos, dimmed, onDragTo }: 
   // was and stays open. Read at the press: the store's answer binds the window to the new note.
   const closesOnSave = note === null;
 
-  // What the person has set. The body lives in the editor's own state.
-  const [initial] = useState<{ fields: Fields; body: unknown }>(() => ({
-    fields: {
-      colour: note?.colour ?? "r1",
-      category: note?.category ?? "Note",
-      decision: note?.decision ?? "none",
-      link: note ? note.link : (w.seed?.link ?? null),
-    },
+  // What the person has set. The body lives in the editor's own state. `from` is the store's note the
+  // window last took its copy from or wrote; `copy` counts the copies taken, and the editor starts
+  // again on each.
+  const [initial, setInitial] = useState<{ from: Note | null; copy: number; fields: Fields; body: unknown }>(() => ({
+    from: note,
+    copy: 0,
+    fields: fieldsOf(note, w.seed?.link ?? null),
     body: note?.body ?? emptyBody(),
   }));
   const [colour, setColour] = useState<string>(initial.fields.colour);
@@ -126,11 +132,29 @@ export function NoteWindow({ window: w, context, screenPos, dimmed, onDragTo }: 
   const [adding, setAdding] = useState(false);
   const [catName, setCatName] = useState("");
   const [catError, setCatError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const handle = useRef<EditorHandle | null>(null);
   const promptSave = useRef<HTMLButtonElement | null>(null);
 
   const fieldsDirty = colour !== base.colour || category !== base.category || decision !== base.decision || !sameLink(link, base.link);
   const dirty = fieldsDirty || (snap !== null && baseSig !== null && snap.signature !== baseSig);
+
+  // A loaded notes file puts a new copy of the note in the store. While the window holds no change of
+  // its own and no Save of its own is in flight, it takes that copy, so its Save cannot write the old
+  // text back over the loaded one.
+  if (note && note !== initial.from && !dirty && !saving) {
+    const fields = fieldsOf(note, null);
+    setInitial({ from: note, copy: initial.copy + 1, fields, body: note.body });
+    setColour(fields.colour);
+    setCategory(fields.category);
+    setDecision(fields.decision);
+    setLink(fields.link);
+    setBase(fields);
+    setBaseSig(null);
+    setSnap(null);
+    setMessage(null);
+    setBlurNumber(false);
+  }
   useEffect(() => {
     setNoteDirty(w.id, dirty);
   }, [dirty, w.id, setNoteDirty]);
@@ -168,30 +192,38 @@ export function NoteWindow({ window: w, context, screenPos, dimmed, onDragTo }: 
   }, []);
   const onBlur = useCallback((s: EditorSnapshot) => setBlurNumber(s.holdsNumberClosed), []);
 
+  // True when the store took the note and the editor still holds the text that was sent, so a caller
+  // may close the window. A Save pressed while one of this window's is in flight does nothing.
   const save = useCallback(async (): Promise<boolean> => {
     const h = handle.current;
-    if (!h) return false;
+    if (!h || saving) return false;
     const verdict = saveVerdict(h.getState());
     if (!verdict.ok) {
       setMessage(messageFor(verdict.code));
       return false;
     }
     const fields = { link, colour, category, decision, body: verdict.body };
-    let r;
-    if (note) r = await update(note.id, fields);
-    else if (w.seed) r = await create({ scenario: w.seed.scenario, time: w.seed.time, ...fields });
+    let pending;
+    if (note) pending = update(note.id, fields);
+    else if (w.seed) pending = create({ scenario: w.seed.scenario, time: w.seed.time, ...fields });
     else return false;
+    const sent = bodySignature(h.getState().doc);
+    setSaving(true);
+    const r = await pending;
+    setSaving(false);
     if (!r.ok) {
       setMessage(messageFor(r.code));
       return false;
     }
     if (!note) bindNote(w.id, r.value.id);
+    setInitial((i) => ({ ...i, from: r.value }));
     setBase({ colour, category, decision, link });
-    setBaseSig(bodySignature(h.getState().doc));
+    setBaseSig(sent);
     setBlurNumber(false);
-    setMessage(IS_STATIC_BUILD ? "savedVisit" : "saved");
-    return true;
-  }, [link, colour, category, decision, note, w.seed, w.id, update, create, bindNote]);
+    const unchanged = bodySignature(h.getState().doc) === sent;
+    setMessage(unchanged ? (IS_STATIC_BUILD ? "savedVisit" : "saved") : null);
+    return unchanged;
+  }, [saving, link, colour, category, decision, note, w.seed, w.id, update, create, bindNote]);
 
   // The Save button and Ctrl+Enter. Whether this press closes the window is read when it is pressed,
   // before the store answers; a refused Save closes nothing and moves no focus.
@@ -364,7 +396,7 @@ export function NoteWindow({ window: w, context, screenPos, dimmed, onDragTo }: 
         ) : null}
 
         <FormatBar active={snap?.active ?? null} enabled={snap?.enabled ?? null} onRun={(k) => handle.current?.run(k)} />
-        <NoteEditor initialBody={initial.body} handleRef={handle} onChange={onChange} onRefuse={onRefuse} onSave={() => void saveFromButton()} onBlur={onBlur} />
+        <NoteEditor key={initial.copy} initialBody={initial.body} autoFocus={initial.copy === 0} handleRef={handle} onChange={onChange} onRefuse={onRefuse} onSave={() => void saveFromButton()} onBlur={onBlur} />
 
         <div {...tip(HINT.tip)} className="flex flex-col text-[9px] leading-[13px] text-muted">
           {HINT.lines.map((line) => (

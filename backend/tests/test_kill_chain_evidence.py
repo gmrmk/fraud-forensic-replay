@@ -3,7 +3,7 @@
 On a population DB the unscoped median crosses account boundaries - a foreign
 account's cheap P2P transfers can drag the median down, making the multiple
 look artificially large (or real small). The fix is an account_id filter on
-both the median SELECT and the COUNT subquery inside it.
+the query that reads the baseline amounts.
 """
 
 from __future__ import annotations

@@ -128,6 +128,8 @@ def test_marcus_impossible_travel_values_are_pinned(marcus_db, tmp_path):
     assert ev["Risk scores"]["value"] == "940 / 942 / 967 / 981 (of 1000)"
     assert ev["Skimmer signature"]["value"].startswith("4x chip-fallback-swipe")
     assert ev["Precursor"]["value"] == "$1 CNP micro-test - Brookharp Audio (risk 610)"
+    # The arc lands on the declined ATM attempt, so the stand-in line says it was declined.
+    assert ev["Auth routing"]["value"] == "STIP - issuer offline, stand-in declined"
     conn = sqlite3.connect(marcus_db)
     try:
         micro_id = conn.execute(
@@ -145,7 +147,7 @@ def test_priya_kill_chain_baseline_is_pinned(priya_db, tmp_path):
         d for d in _decisions(priya_db, m.rules, m.focal) if d["verdict"] == "ACCOUNT TAKEOVER"
     ]
     ev = {e["label"]: e["value"] for e in ato["evidence"]}
-    assert ev["Amount vs baseline"] == "$4,200 wire ~ 93x the account's median P2P ($45.00)"
+    assert ev["Amount vs baseline"] == "$4,200 wire ~ 105x the account's median P2P ($40.00)"
     assert ato["severity"] == 0.9
 
 
@@ -275,8 +277,8 @@ def _tamsinmere(conn, tid, ts, amount, session=""):
 def test_kill_chain_baseline_excludes_the_flagged_session(tmp_path):
     """The P2P baseline is the account's history OUTSIDE the flagged session: P2P sent
     inside the takeover session must not shift the median. Three large in-session
-    tamsinmere transfers would pull an unfiltered median from $45 up to $5,000 and shrink the
-    multiple from 93x to 1x."""
+    tamsinmere transfers would pull an unfiltered median from $42.50 up to $5,000 and shrink the
+    multiple from 99x to 1x."""
     dbfile = tmp_path / "data" / "baseline.db"
     init_db(dbfile)
     conn = connect(dbfile)
@@ -295,7 +297,7 @@ def test_kill_chain_baseline_excludes_the_flagged_session(tmp_path):
         ev = {e["label"]: e["value"] for e in _kill_chain_evidence(conn, "sess-takeover")}
     finally:
         conn.close()
-    assert ev["Amount vs baseline"] == "$4,200 wire ~ 93x the account's median P2P ($45.00)"
+    assert ev["Amount vs baseline"] == "$4,200 wire ~ 99x the account's median P2P ($42.50)"
 
 
 # --- the minimal fixtures the rest of the suite uses, labelled vs unlabelled ---

@@ -64,6 +64,8 @@ export function GlobeBadgeLayer({ map }: { map: maplibregl.Map | null }) {
     return kept.length === entities.length ? entities : kept;
   }, [entities, show]);
   const decisions = useMemo(() => overlaysOf(shownEntities, nodes), [shownEntities, nodes]);
+  // A decision the switches hide still works its events, so their flags stay down.
+  const working = useMemo(() => overlaysOf(entities, nodes), [entities, nodes]);
   // Membership only changes when the playhead crosses a timestamp: key the sources on that. The
   // crossing reads the whole list, so a switch moves no step.
   const at = windowed ? lastCrossing(entities, playhead) : Infinity;
@@ -71,11 +73,11 @@ export function GlobeBadgeLayer({ map }: { map: maplibregl.Map | null }) {
   // and the clearing of a flag by a decision are left as they were: the sources are built from every decision).
   const solo = useSoloIds();
   const sources = useMemo(() => {
-    const all = badgeSources(decisions, queued, selected, shownEntities, at);
+    const all = badgeSources(decisions, working, queued, selected, shownEntities, at);
     if (solo === null) return all;
     const kept = new Set(decisions.filter((d) => decisionInSolo(solo, d)).map((d) => d.id));
     return all.filter((s) => s.family !== "decision" || kept.has(s.countKey));
-  }, [decisions, queued, selected, shownEntities, at, solo]);
+  }, [decisions, working, queued, selected, shownEntities, at, solo]);
   const anyLit = sources.some((s) => s.lit);
 
   const piles = useMemo(() => {

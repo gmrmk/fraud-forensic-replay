@@ -11,6 +11,7 @@ from __future__ import annotations
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
+from statistics import median
 
 
 @dataclass(frozen=True)
@@ -160,10 +161,12 @@ def _gather_evidence(card_rows: list[dict], curr: dict) -> list[dict]:
         )
 
     if curr.get("auth_source") == "stip":
+        # An arc can land on a declined attempt, so the row's own code words the outcome.
+        outcome = "approved" if (curr.get("auth_response_code") or "00") == "00" else "declined"
         ev.append(
             {
                 "label": "Auth routing",
-                "value": "STIP - issuer offline, stand-in approved",
+                "value": f"STIP - issuer offline, stand-in {outcome}",
                 "entity_ref": curr["id"],
             }
         )
@@ -219,18 +222,15 @@ def _kill_chain_evidence(conn: sqlite3.Connection, session_id: str) -> list[dict
             if wires[0].get("account_id"):
                 base += " AND account_id = ?"
                 args += (wires[0]["account_id"],)
-            median = conn.execute(
-                f"SELECT amount {base} ORDER BY amount "
-                f"LIMIT 1 OFFSET (SELECT COUNT(*) {base}) / 2",
-                args + args,
-            ).fetchone()
-            if median is not None and median[0]:
-                mult = wires[0]["amount"] / float(median[0])
+            amounts = [float(r[0]) for r in conn.execute(f"SELECT amount {base}", args)]
+            mid = median(amounts) if amounts else 0.0
+            if mid:
+                mult = wires[0]["amount"] / mid
                 ev.append(
                     {
                         "label": "Amount vs baseline",
                         "value": f'${wires[0]["amount"]:,.0f} wire ~ {mult:,.0f}x the '
-                        f"account's median P2P (${float(median[0]):,.2f})",
+                        f"account's median P2P (${mid:,.2f})",
                         "entity_ref": wires[0]["id"],
                     }
                 )

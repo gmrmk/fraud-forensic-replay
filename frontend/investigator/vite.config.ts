@@ -26,8 +26,9 @@ export default defineConfig({
         // Literal 127.0.0.1, not "localhost": on Windows boxes where localhost
         // resolves ::1 (IPv6) first, a "localhost" target misses the IPv4-only
         // uvicorn backend and the globe loads with no data. (FIX: 2026-06-14)
+        // No changeOrigin: the backend's notes routes check the Host the browser sent, so the
+        // proxy passes it through rather than putting the target's own address in its place.
         target: "http://127.0.0.1:8000",
-        changeOrigin: true,
       },
     },
   },

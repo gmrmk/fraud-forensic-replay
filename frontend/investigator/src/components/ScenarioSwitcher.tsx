@@ -108,6 +108,8 @@ export function ScenarioSwitcher({
         // reload's address carries it (the adapter reads it there). Elsewhere the address is bare, as ever.
         dropShareLink(IS_STATIC_BUILD && !scenarioChoiceHeld(s.id) ? s.id : undefined);
         reload();
+        // A reload the visitor cancels on the leave prompt returns here, and the menu takes picks again.
+        setSwitching(false);
       })
       .catch((err: Error) => {
         setError(err.message);

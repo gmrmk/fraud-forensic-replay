@@ -1,7 +1,7 @@
 /**
  * The case's steppable events: every record the timeline draws as a dot, in time order, each
  * with the target navigate() takes. The step keys walk this list, so a pack with only
- * file-backed kinds (which has no ticker) steps like any other.
+ * file-backed kinds steps like any other.
  *
  * Not steps: a kind that draws as bars (it declares a magnitude), a kind that draws as capsules
  * (it declares a decision mapping, and the manifest places it), and a record with no time. A
@@ -39,8 +39,13 @@ export function trackNodes(nodes: readonly ScenarioNode[]): ScenarioNode[] {
   return nodes.filter((n) => isGenericNode(n) && !(placed && isOverlayNode(n)));
 }
 
+/** The manifest kinds the track draws as dots: the track's kinds less those that draw as bars. The
+ *  step keys, the day band and the ticker read the same set. */
+export const dotKinds = (nodes: readonly ScenarioNode[]): Set<string> =>
+  new Set(trackNodes(nodes).filter((n) => !n.magnitude).map((n) => n.kind));
+
 export function caseStepEvents(rows: CaseRows, nodes: readonly ScenarioNode[]): CaseStepEvent[] {
-  const dots = new Set(trackNodes(nodes).filter((n) => !n.magnitude).map((n) => n.kind));
+  const dots = dotKinds(nodes);
   const at = (iso: string): number => Date.parse(iso);
   const events: CaseStepEvent[] = [
     ...rows.transactions.map((tx): CaseStepEvent => ({ id: tx.id, t: at(tx.timestamp), match: { kind: tx.is_fraud ? "fraud" : "auth", tx } })),

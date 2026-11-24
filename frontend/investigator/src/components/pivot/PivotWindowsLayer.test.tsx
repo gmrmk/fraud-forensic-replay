@@ -163,6 +163,41 @@ describe("PivotWindowsLayer - mapping host", () => {
     expect(container.querySelector("svg line")).not.toBeNull();
   });
 
+  describe("the map events a tied window follows", () => {
+    const handlerFor = (map: maplibregl.Map, type: string) =>
+      (map.on as unknown as ReturnType<typeof vi.fn>).mock.calls.find((c) => c[0] === type)?.[1] as (() => void) | undefined;
+
+    it("does not re-render on the map's render event, which fires on every frame", () => {
+      usePivotStore.getState().openPopout(signIn, SIGN_IN);
+      const map = globeMap(() => ({ lng: 4.9, lat: 52.4 }));
+      render(<PivotWindowsLayer map={map} decisions={[]} context={emptyContext} />);
+      expect(handlerFor(map, "move")).toBeTypeOf("function");
+      expect(handlerFor(map, "render")).toBeUndefined();
+    });
+
+    it("redraws a tied window on the library's projectiontransition alone, with no move", () => {
+      const projection = { type: "globe" };
+      const map = Object.assign(globeMap(() => ({ lng: -175, lat: -52 })), { getProjection: () => projection });
+      usePivotStore.getState().openPopout(signIn, SIGN_IN);
+      const { container } = render(<PivotWindowsLayer map={map} decisions={[]} context={emptyContext} />);
+      expect(container.querySelector('[role="dialog"]')).toBeNull();
+      const onFlip = handlerFor(map, "projectiontransition");
+      expect(onFlip).toBeTypeOf("function");
+      projection.type = "mercator";
+      act(() => onFlip?.());
+      expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+    });
+
+    it("removes its projectiontransition listener on unmount", () => {
+      usePivotStore.getState().openPopout(signIn, SIGN_IN);
+      const map = globeMap(() => ({ lng: 4.9, lat: 52.4 }));
+      const { unmount } = render(<PivotWindowsLayer map={map} decisions={[]} context={emptyContext} />);
+      const onFlip = handlerFor(map, "projectiontransition");
+      unmount();
+      expect(map.off).toHaveBeenCalledWith("projectiontransition", onFlip);
+    });
+  });
+
   it("a focused popout whose pin rotates behind the globe hands focus back to its opener", async () => {
     let center = { lng: 4.9, lat: 52.4 }; // Amsterdam faces the camera
     const map = globeMap(() => center);

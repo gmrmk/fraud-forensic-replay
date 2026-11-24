@@ -2,14 +2,9 @@
  * Playback camera-follow helpers (pure). During playback the globe should keep
  * the *currently-active* event framed without the analyst hand-spinning it -
  * and without jittering on every event inside a dense cluster. These pure
- * functions decide WHAT to look at and WHETHER the move is big enough to be
- * worth an eased re-center; the actual `map.easeTo` lives in
- * components/useCameraMoves.ts (the GPU/camera side is eyes-on-gated, this
- * logic is unit-tested).
- *
- * The distance gate is why the camera holds on the Houston baseline cluster
- * (consecutive events <1° apart) but swings to Lagos on the impossible leap
- * (~100° apart) - it follows the *story*, not every blip.
+ * functions decide WHAT to look at and WHERE the one eased move goes; the actual
+ * `map.easeTo` lives in components/useCameraMoves.ts (the GPU/camera side is
+ * eyes-on-gated, this logic is unit-tested).
  */
 import type { ProjectionSpecification } from "maplibre-gl";
 import { mapIsFlat } from "./globe/projection";
@@ -38,21 +33,6 @@ export function activeFollowTarget(
   return best;
 }
 
-/** Approximate angular distance in degrees (equirectangular, longitude scaled
- *  by mean-latitude cosine). Good enough for a "did we move far" gate - not a
- *  precise geodesic. */
-export function degDistance(a: LngLat, b: LngLat): number {
-  const dLat = a.lat - b.lat;
-  const dLng = (a.lng - b.lng) * Math.cos(((a.lat + b.lat) * 0.5 * Math.PI) / 180);
-  return Math.hypot(dLat, dLng);
-}
-
-/** True when `target` is far enough from `center` to warrant an eased
- *  re-center - so cluster blips don't jitter the camera but a real jump does. */
-export function shouldRecenter(center: LngLat, target: LngLat, minDeg: number): boolean {
-  return degDistance(center, target) > minDeg;
-}
-
 // ---- The calmer follow: frame the places and hold ----
 //
 // Late in the card story the events alternate between Houston and Lagos, and the old rule crossed
@@ -79,7 +59,7 @@ const unit = (p: LngLat): [number, number, number] => [
 ];
 
 /** The angle at the globe's centre between two places, in degrees (0 to 180): a true great-circle
- *  distance, right across the antimeridian and for places far apart, where `degDistance` is not. */
+ *  distance, right across the antimeridian and for places far apart. */
 export function greatCircleDeg(a: LngLat, b: LngLat): number {
   const [ax, ay, az] = unit(a);
   const [bx, by, bz] = unit(b);

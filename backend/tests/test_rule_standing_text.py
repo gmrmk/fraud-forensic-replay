@@ -21,8 +21,8 @@ from generators.concordia.scenarios import SCENARIOS
 from tests._left_out import require_files
 
 SCENARIO_DIR = Path(__file__).resolve().parents[1] / "scenarios"
-# The two manifests the public copy leaves out: a test that reads one skips when it is absent.
-LEFT_OUT = ("population.scenario.json", "card-fraud-concordia.scenario.json")
+# The manifest the public copy leaves out: a test that reads it skips when it is absent.
+LEFT_OUT = ("card-fraud-concordia.scenario.json",)
 
 # A token is a word (a hyphenated word or one with an apostrophe is one word) or one mark.
 _TOKEN = re.compile(r"[A-Za-z0-9]+(?:['-][A-Za-z0-9]+)*|[^\sA-Za-z0-9]")
@@ -153,7 +153,6 @@ _FIVE_CARD_RULES = [
 ]
 ORIGINALS: list[tuple[str, str, str, str, str]] = [
     *[("card-fraud.scenario.json", *row) for row in _FIVE_CARD_RULES],
-    *[("population.scenario.json", *row) for row in _FIVE_CARD_RULES],
     ("platform-access.scenario.json", "key-after-new-device", KT_WHAT, KT_WHY, ""),
     ("platform-access.scenario.json", "spend-burst", SB_WHAT, SB_WHY, ""),
     ("priya-ato.scenario.json", "account-takeover", AT_WHAT, AT_WHY, ""),

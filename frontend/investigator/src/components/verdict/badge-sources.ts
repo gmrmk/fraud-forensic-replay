@@ -28,9 +28,11 @@ export function lastCrossing(entities: readonly Entity[], playhead: number): num
   return step;
 }
 
+/** `decisions` draw capsules and links; `working` are the decisions whose reached members clear the
+ *  flags of the events they worked, hidden ones included. */
 export function badgeSources(
-  decisions: readonly DecisionView[], queued: readonly Decision[], selected: Entity | null,
-  entities: readonly Entity[], at: number,
+  decisions: readonly DecisionView[], working: readonly DecisionView[], queued: readonly Decision[],
+  selected: Entity | null, entities: readonly Entity[], at: number,
 ): BadgeSource[] {
   const reached = decisions.filter((d) => d.at <= at);
   const links = selected
@@ -45,7 +47,7 @@ export function badgeSources(
   // ponytail: events resolve among the manifest-node entities only, so a rule whose landing trigger
   // is a built-in kind (a card transaction or login) draws no flag; resolve through every kind to lift it.
   const byId = new Map(entities.map((e) => [e.id, e]));
-  const worked = new Set(reached.flatMap((d) => d.events));
+  const worked = new Set(working.filter((d) => d.at <= at).flatMap((d) => d.events));
   const flagged = new Set<string>();
   for (const r of queued) {
     const id = queuedEventId(r);

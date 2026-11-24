@@ -211,71 +211,14 @@ def entities(kind: str, case: str | None = None) -> list[dict]:
         conn.close()
 
 
-@app.get("/api/portfolio/summary")
-def portfolio_summary() -> dict:
-    """Population shape of the ACTIVE scenario's DB: distinct cards + total
-    transactions behind the focal case."""
-    conn = connect()
-    try:
-        cards, txs = conn.execute(
-            "SELECT COUNT(DISTINCT card_id), COUNT(*) FROM transactions"
-        ).fetchone()
-    finally:
-        conn.close()
-    return {"cards": cards, "transactions": txs}
-
-
-def _card_of_account(conn: sqlite3.Connection, account_id: str | None) -> str | None:
-    """The account's card (lowest id when it has several), or None: no account, no cards table
-    or no card row."""
-    if not account_id:
-        return None
-    try:
-        row = conn.execute(
-            "SELECT id FROM cards WHERE account_id = ? ORDER BY id LIMIT 1", (account_id,)
-        ).fetchone()
-    except sqlite3.OperationalError:
-        return None
-    return str(row["id"]) if row else None
-
-
 @app.get("/api/decisions")
-def decisions(
-    card_id: str | None = None,
-    account_id: str | None = None,
-    case: str | None = None,
-) -> list[dict]:
-    """Evaluate the active scenario's rule-defs into forensic Decisions.
-    Decisions annotate Paths; a failure here degrades to [] (Paths still render).
-
-    Focal (all per-request, never process-global):
-      ?card_id= and ?account_id= each add their key, so both together reach the rules;
-      else ?case= resolves via the cases registry;
-      else, with no usable key (no query, an unknown case), manifest.focal, as /api/transactions
-      does. The manifest path is the unchanged legacy path and is never resolved or emptied.
-    In a pack whose manifest declares a focal card, a request focal with an account and no card
-    gets its card from the cards table; when none resolves the answer is [] and no row is read.
-    An empty focal there would make the card detectors read every card in the pack and report
-    bursts and runs stitched from other customers' cards. A pack with no focal card keeps its
-    focal as given (a deliberately unscoped pack).
-    """
+def decisions() -> list[dict]:
+    """Evaluate the active scenario's rule-defs into forensic Decisions for the manifest's focal.
+    Decisions annotate Paths; a failure here degrades to [] (Paths still render)."""
     manifest = sr.get_active()
-    requested: dict = {}
-    if card_id:
-        requested["card_id"] = card_id
-    if account_id:
-        requested["account_id"] = account_id
-    if not requested and case is not None:
-        requested = cases_module.focal_for(case)
-    focal = requested or manifest.focal
     conn = connect()
     try:
-        if requested and manifest.focal.get("card_id") and not focal.get("card_id"):
-            resolved = _card_of_account(conn, focal.get("account_id"))
-            if resolved is None:
-                return []
-            focal = {**focal, "card_id": resolved}
-        return [asdict(d) for d in rules_module.evaluate(conn, manifest.rules, focal)]
+        return [asdict(d) for d in rules_module.evaluate(conn, manifest.rules, manifest.focal)]
     except Exception:
         logging.getLogger(__name__).exception("decisions eval failed; degrading to []")
         return []

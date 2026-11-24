@@ -35,6 +35,7 @@ import {
 } from "./lib/adapters/ffr-seed";
 import type { Entity } from "./lib/entity";
 import { buildTickerStream, type TickerItem } from "./lib/ticker-stream";
+import { dotKinds } from "./lib/case-events";
 import type { PivotContext } from "./lib/matches";
 import type { ScenarioAnnotation, ScenarioHome } from "./lib/scenarios";
 import { MapModeButton } from "./components/MapModeButton";
@@ -411,12 +412,23 @@ export default function App() {
   // separate auth/fraud node queries (same split as entitiesByKind);
   // row metadata (label/palette/primary/secondary) flows from the
   // manifest nodes, so every kind the schema declares streams free.
+  // A manifest kind streams the timed records the track draws as dots, the ones the step keys walk.
   const tickerItems: TickerItem[] = useMemo(() => {
     const fraudRows: Transaction[] = [];
     const authRows: Transaction[] = [];
     for (const tx of soloTransactions) (tx.is_fraud ? fraudRows : authRows).push(tx);
+    const dots = dotKinds(schemaNodes);
+    // The rows are grouped in a Map and become own keys, so a kind named like an inherited key is an ordinary kind.
+    const generic = new Map<string, Array<Record<string, unknown>>>();
+    for (const e of soloEntities) {
+      if (!dots.has(e.kind) || e.timestamp <= 0) continue;
+      const list = generic.get(e.kind);
+      if (list) list.push(e.fields);
+      else generic.set(e.kind, [e.fields]);
+    }
     return buildTickerStream(
       {
+        ...Object.fromEntries(generic),
         auth: asRows(authRows),
         fraud: asRows(fraudRows),
         login: asRows(soloLogins),
@@ -425,7 +437,7 @@ export default function App() {
       },
       schemaNodes,
     );
-  }, [soloTransactions, soloLogins, soloAccountEvents, soloTransfers, schemaNodes]);
+  }, [soloTransactions, soloLogins, soloAccountEvents, soloTransfers, soloEntities, schemaNodes]);
 
   // Build per-kind Entity arrays from the FULL (unfiltered) lists so Path
   // geometry covers the whole arc. The playhead cascade reveals arcs over
@@ -584,7 +596,7 @@ export default function App() {
         <MapMenus
           transactions={transactions} logins={logins} places={places} transfers={transfers}
           visibleTransactions={visibleTransactions} visibleLogins={visibleLogins}
-          loadError={loadError} genericByKind={genericByKind}
+          loadError={loadError} genericByKind={genericByKind} soloEntities={soloEntities}
         />
         <NotesMenu lookup={noteLookup} />
         <MapModeButton />

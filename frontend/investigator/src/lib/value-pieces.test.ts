@@ -9,7 +9,7 @@ const FACTOR = "large geographic jump from the prior swipe (geo_displacement_km=
 const CARD = "card-0080 visited 2026-05-04, 2 chip-fallback swipes 2026-05-27";
 const SCORES = "940 / 942 / 967 / 981 (of 1000)";
 const ALL = [
-  SKIMMER, FACTOR, CARD, SCORES, "STIP - issuer offline, stand-in approved", `Alderlowe Fuel & Go ${MID} Pump 4`,
+  SKIMMER, FACTOR, CARD, SCORES, "STIP - issuer offline, stand-in declined", `Alderlowe Fuel & Go ${MID} Pump 4`,
   "30/30 (100%)", "", " ", "a  b", " / ", "x / ",
 ];
 

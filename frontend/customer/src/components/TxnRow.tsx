@@ -1,4 +1,4 @@
-import { isDeclined } from "../lib/derive";
+import { HOUSTON, isDeclined } from "../lib/derive";
 import { formatMoney } from "../lib/money";
 import type { Transaction } from "../lib/types";
 
@@ -13,7 +13,7 @@ function merchantCity(tx: Transaction): string {
 
 function formatTime(ts: string): string {
   const d = new Date(ts);
-  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: HOUSTON });
 }
 
 export function TxnRow({ tx }: Props) {

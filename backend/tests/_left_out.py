@@ -1,6 +1,6 @@
 """Skip a test, with a reason, when a file it reads is not in the tree.
 
-The public copy leaves some files of the repository out (the profiles file, two scenario files).
+The public copy leaves some files of the repository out (the profiles file, one scenario file).
 A test that reads such a file calls `require_files` at the point where it reads: when a file is
 absent the test is skipped and the reason names the file; when every file is there the call does
 nothing and the test runs exactly as it does in the working repository.

@@ -15,6 +15,7 @@ function mount() {
   render(
     <NoteEditor
       initialBody={{ v: 1, content: [{ type: "paragraph" }] }}
+      autoFocus
       handleRef={handleRef}
       onChange={() => undefined}
       onRefuse={() => undefined}

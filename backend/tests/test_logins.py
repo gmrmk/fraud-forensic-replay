@@ -143,20 +143,17 @@ def test_logins_have_bank_grade_fields(seeded_db) -> None:
             assert login["challenge_reason"] is None
 
 
-def test_seed_logins_are_idempotent(tmp_path) -> None:
-    """Re-running main() against the same DB must produce the same IDs -
-    INSERT OR REPLACE relies on stable IDs to truly replace, not append."""
-    db = tmp_path / "idem.db"
-    init_db(db)
-    seed.main(db_path=db)
+def test_seed_logins_are_deterministic(tmp_path) -> None:
+    """main() on two fresh DBs must produce the same login IDs, with no ID twice."""
     from db import connect
 
-    ids_first = [
-        r["id"] for r in connect(db).execute("SELECT id FROM login_events ORDER BY id").fetchall()
-    ]
-    seed.main(db_path=db)  # second pass
-    ids_second = [
-        r["id"] for r in connect(db).execute("SELECT id FROM login_events ORDER BY id").fetchall()
-    ]
-    assert ids_first == ids_second
-    assert len(ids_first) == len(set(ids_first)), "duplicate IDs after re-seed"
+    ids = []
+    for name in ("first.db", "second.db"):
+        db = tmp_path / name
+        init_db(db)
+        seed.main(db_path=db)
+        ids.append(
+            [r["id"] for r in connect(db).execute("SELECT id FROM login_events ORDER BY id")]
+        )
+    assert ids[0] == ids[1]
+    assert len(ids[0]) == len(set(ids[0])), "duplicate login IDs"

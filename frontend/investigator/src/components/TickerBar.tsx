@@ -9,13 +9,11 @@
  * never from hardcoded per-kind switches. A new scenario kind renders
  * free once its manifest node declares label/palette/primary/secondary.
  *
- * Architectural bridge note: useNavigation.navigate still accepts
- * EntityMatch (the seed-schema union), not the abstract item shape.
- * This component bridges by pairing item.kind with item.raw (the
- * intact original row) at navigate-call time. Kinds outside the union
- * fall through without firing navigate - deferred to a later
- * platform-readiness slice that teaches useNavigation the abstract
- * shape.
+ * Architectural bridge note: useNavigation.navigate accepts EntityMatch,
+ * not the abstract item shape. This component bridges by pairing
+ * item.kind with item.raw (the intact original row) at navigate-call
+ * time for the seed kinds, and finds a manifest kind's loaded entity by
+ * kind and id in the pivot-data store.
  *
  * Instrument-B: the shell is a <Panel material="instrument"> (lit
  * gradient + edge-light + grain) instead of the flat `bg-panel-bg border` HUD
@@ -37,6 +35,7 @@
 import { useMemo, type CSSProperties } from "react";
 import { usePlayhead } from "../store/playhead";
 import { useNavigation } from "../store/navigation";
+import { usePivotData } from "../store/pivot-data";
 import { useStoryInk } from "../store/kind-ink";
 import type { TickerItem } from "../lib/ticker-stream";
 import { Panel, FocusButton } from "./ui";
@@ -101,9 +100,7 @@ export function TickerBar({ items }: Props) {
 
   // Bridge: pair item.kind with item.raw to rehydrate the EntityMatch.
   // The stream layer passes raw rows through intact, so the cast
-  // resolves to the same concrete object App fetched. Kinds outside
-  // the union are a no-op until useNavigation accepts the abstract
-  // entity shape.
+  // resolves to the same concrete object App fetched.
   function navigateItem(item: TickerItem) {
     const raw = item.raw;
     if (item.kind === "auth") navigate({ kind: "auth", tx: raw as never });
@@ -114,7 +111,11 @@ export function TickerBar({ items }: Props) {
       navigate({ kind: "account_event", event: raw as never });
     else if (item.kind === "transfer")
       navigate({ kind: "transfer", transfer: raw as never });
-    // Future kinds: no-op until useNavigation supports the abstract shape.
+    else {
+      // A record of a story's own kind navigates to the loaded entity of that kind and id; a press on a record that is not loaded does nothing.
+      const entity = usePivotData.getState().entities.find((e) => e.kind === item.kind && e.id === item.id);
+      if (entity) navigate({ kind: "entity", entity });
+    }
   }
 
   function stepBy(delta: number) {

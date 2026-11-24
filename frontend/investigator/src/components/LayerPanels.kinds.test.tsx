@@ -15,9 +15,11 @@ import type { ScenarioNode } from "../lib/scenarios";
 import { verdictNode } from "../lib/verdict-fixtures";
 import { kindSwitchWords, moreWords, valueSwitchWords, valuesFoldWords } from "../lib/tooltip-words/layers";
 import { useLayers } from "../store/layers";
+import { usePivotData } from "../store/pivot-data";
 import { usePlayhead } from "../store/playhead";
 import { useSchema } from "../store/schema";
 import { useSelection } from "../store/selection";
+import { useSolo } from "../store/solo";
 import { useTheme } from "../store/theme";
 import { COLOR_MODES, THEMES } from "../theme/axes";
 import type { LoginEvent, Place, Transaction } from "../types";
@@ -41,7 +43,7 @@ const at = (i: number) => new Date(T + i * MIN).toISOString();
 const node = (kind: string, label: string, palette: string, extra: Partial<ScenarioNode> = {}): ScenarioNode => ({
   kind, label, palette, source: "sql", coords: null, timestamp: "at", primary: "${id}", ...extra,
 });
-const SIGN = node("sign", "Sign-in", "#ff9bd2", { filter: { field: "net", label: "Network type" } });
+const SIGN = node("sign", "Sign-in", "#ff9bd2", { filter: { field: "net", label: "Network type" }, pivotable: ["net"] });
 const RESET = node("reset", "Limit reset", "#7ee787");
 const EMPTY = node("empty", "Empty kind", "#ffb347");
 const VERDICT: ScenarioNode = { ...verdictNode, filter: { field: "state", label: "Status" } };
@@ -57,10 +59,11 @@ const SIGNS = rows(SIGN, [
   { id: "s5", at: at(5) },
 ]);
 const RESETS = rows(RESET, [0, 1, 2, 3].map((i) => ({ id: `r${i}`, at: at(i) })));
+// Each decision works one sign-in: d0 and d2 work corporate ones, d1 an education one.
 const DECISIONS = rows(VERDICT, [
-  { id: "d0", when: at(0), state: "FAIL" },
-  { id: "d1", when: at(1), state: "PASS" },
-  { id: "d2", when: at(2), state: "WAITING" },
+  { id: "d0", when: at(0), state: "FAIL", worked: "s1" },
+  { id: "d1", when: at(1), state: "PASS", worked: "s2" },
+  { id: "d2", when: at(2), state: "WAITING", worked: "s3" },
 ]);
 
 const BY_KIND = { sign: SIGNS, reset: RESETS, empty: [], verdict_export: DECISIONS };
@@ -94,6 +97,22 @@ afterEach(() => {
   useSchema.setState({ nodes: [] });
   usePlayhead.setState({ minTime: 0, maxTime: 0, playhead: 0 });
   useLayers.setState({ showAuths: true, showLogins: true, hiddenKinds: [], hiddenValues: {} });
+  useSolo.setState({ solo: null });
+  usePivotData.setState({ entities: [] });
+});
+
+describe("LayerPanels: a row alone narrows a kind's reached count and leaves its total whole", () => {
+  it("counts only the records the solo keeps, and a kind it keeps none of stays a switch", () => {
+    // The corporate row is alone: it keeps s0 and s1 (reached) and s3 (ahead of the playhead), and no reset.
+    usePivotData.setState({ entities: [...SIGNS, ...RESETS, ...DECISIONS] });
+    useSolo.setState({ solo: { field: "net", value: "corporate" } });
+    // The kept records are the ones App hands the menu: the decisions do not hold the soloed field.
+    renderMenu({ soloEntities: [SIGNS[0], SIGNS[1], SIGNS[3]] });
+    expect(toggle("Sign-in").textContent).toContain("2 / 6");
+    expect(toggle("Limit reset").textContent).toContain("0 / 4");
+    // A decision counts as the map draws its capsule, by the sign-in it works: d0 is reached, d2 is ahead.
+    expect(toggle("Verdict").textContent).toContain("1 / 3");
+  });
 });
 
 describe("LayerPanels: a kind with records is a switch (B1, B7)", () => {

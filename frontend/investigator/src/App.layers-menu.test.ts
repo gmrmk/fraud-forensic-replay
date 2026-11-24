@@ -34,7 +34,7 @@ describe("App: the top bar mounts the map menus", () => {
     expect(appSource.slice(gear)).not.toMatch(/<MapMenus\b/);
   });
 
-  it("MapMenus is given each of its eight props by name, with that prop's own value", () => {
+  it("MapMenus is given each of its nine props by name, with that prop's own value", () => {
     const open = appSource.indexOf("<MapMenus");
     const element = appSource.slice(open, appSource.indexOf("/>", open));
     const props = [
@@ -46,9 +46,10 @@ describe("App: the top bar mounts the map menus", () => {
       "visibleLogins",
       "loadError",
       "genericByKind",
+      "soloEntities",
     ];
     for (const p of props) expect(element, p).toMatch(new RegExp(`\\b${p}=\\{${p}\\}`));
-    // Nothing else is passed: every attribute of the element is one of the eight.
+    // Nothing else is passed: every attribute of the element is one of the nine.
     const named = [...element.matchAll(/(\w+)=\{/g)].map((m) => m[1]);
     expect(named.sort()).toEqual([...props].sort());
   });

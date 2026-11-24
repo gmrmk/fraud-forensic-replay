@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { entityLngLat, angularDistanceDeg, isOccludedByGlobe } from "./node-anchor";
+import { entityLngLat, isOccludedByGlobe } from "./node-anchor";
 import type { Transaction, LoginEvent } from "../types";
 
 const tx = {
@@ -26,12 +26,6 @@ describe("entityLngLat", () => {
 });
 
 describe("great-circle occlusion fallback", () => {
-  it("angular distance between identical points is 0", () => {
-    expect(angularDistanceDeg({ lng: 0, lat: 0 }, { lng: 0, lat: 0 })).toBeCloseTo(0);
-  });
-  it("antipodal points are 180 degrees apart", () => {
-    expect(angularDistanceDeg({ lng: 0, lat: 0 }, { lng: 180, lat: 0 })).toBeCloseTo(180);
-  });
   it("a point more than 90 degrees from camera center is occluded", () => {
     expect(isOccludedByGlobe({ lng: 0, lat: 0 }, { lng: 120, lat: 0 })).toBe(true);
     expect(isOccludedByGlobe({ lng: 0, lat: 0 }, { lng: 45, lat: 0 })).toBe(false);

@@ -26,7 +26,6 @@ import rules
 from db import PROJECT_ROOT
 
 SCENARIOS_DIR = PROJECT_ROOT / "backend" / "scenarios"
-POPULATION_DB = PROJECT_ROOT / "data" / "population.db"
 
 
 def _scenarios() -> list[dict]:
@@ -99,26 +98,3 @@ def test_declared_rules_fire(scenario: dict) -> None:
         f"{scenario['id']}: declared non-ML rules produced ZERO decisions "
         "(degrade-to-empty regression; see FIX-2026-06-10)"
     )
-
-
-def test_population_pack_integrity() -> None:
-    """Distribution + sanity guards over the population pack (data/population.db):
-    multi-card, populated, fraud present but not dominant, no NULL coordinates
-    (a NULL coord is a silent TypeError inside the geo detector)."""
-    if not POPULATION_DB.exists():
-        pytest.skip(f"population pack not seeded: {POPULATION_DB}")
-    conn = _readonly(POPULATION_DB)
-    try:
-        total = conn.execute("SELECT COUNT(*) FROM transactions").fetchone()[0]
-        assert total > 200, f"population pack has only {total} transactions (re-seed anomaly)"
-        cards = conn.execute("SELECT COUNT(DISTINCT card_id) FROM transactions").fetchone()[0]
-        assert cards > 1, f"population pack has {cards} distinct card(s); expected a population"
-        fraud = conn.execute("SELECT COUNT(*) FROM transactions WHERE is_fraud = 1").fetchone()[0]
-        assert fraud >= 1, "population pack carries no fraud rows (signature missing)"
-        assert fraud / total < 0.5, f"fraud ratio {fraud}/{total} >= 0.5 (seeding anomaly)"
-        nulls = conn.execute(
-            "SELECT COUNT(*) FROM transactions WHERE merchant_lat IS NULL OR merchant_lng IS NULL"
-        ).fetchone()[0]
-        assert nulls == 0, f"{nulls} transactions with NULL merchant coordinates"
-    finally:
-        conn.close()

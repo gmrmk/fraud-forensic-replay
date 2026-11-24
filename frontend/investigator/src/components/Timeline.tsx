@@ -384,7 +384,7 @@ export function Timeline({ transactions, logins, accountEvents, transfers, gener
   );
 
   // Case day-density band cells (one per Houston day; red where a severe event landed). A solo narrows them.
-  const dayDensity = useCaseDayCells(shown.transactions, shown.logins, shown.accountEvents, shown.transfers);
+  const dayDensity = useCaseDayCells(shown.transactions, shown.logins, shown.accountEvents, shown.transfers, shown.genericEntities);
 
   // The case readout: the time left (the tab holds the one clock), then the day's count.
   const readout = (

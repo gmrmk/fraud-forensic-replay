@@ -9,6 +9,8 @@ import { usePlayhead } from "../store/playhead";
 import { useNavigation } from "../store/navigation";
 import { useSelection } from "../store/selection";
 import { buildTickerStream } from "../lib/ticker-stream";
+import { manifestRowToEntity } from "../lib/adapters/manifest-row";
+import { usePivotData } from "../store/pivot-data";
 import type { ScenarioNode } from "../lib/scenarios";
 // TickerBar renders label/palette/primary/secondary from the manifest
 // node carried on each TickerItem - no hardcoded per-kind switches. The
@@ -103,6 +105,7 @@ describe("TickerBar", () => {
       pulseToken: 0,
     });
     useSelection.setState({ selected: null });
+    usePivotData.setState({ entities: [] });
   });
 
   it("shows nothing when items list is empty", () => {
@@ -310,11 +313,59 @@ describe("TickerBar", () => {
     expect(event.className).toContain("kind-auth");
   });
 
+  it("a press on a record of a story's own kind navigates to that loaded record", () => {
+    const signinNode: ScenarioNode = {
+      kind: "signin",
+      label: "Sign-in",
+      palette: "#66ccff",
+      source: "json",
+      timestamp: "timestamp",
+      primary: "${outcome}",
+      secondary: "${city}",
+      coords: { lat: "lat", lng: "lng" },
+    };
+    const row = { id: "s1", timestamp: T_LOGIN, outcome: "success", city: "Lagos", lat: 6.5, lng: 3.4 };
+    const entity = manifestRowToEntity(signinNode, row);
+    usePivotData.setState({ entities: [entity] });
+    usePlayhead.setState({ playhead: MS_LOGIN });
+    render(<TickerBar items={buildTickerStream({ signin: [entity.fields] }, [signinNode])} />);
+    fireEvent.click(screen.getByTestId("ticker-event"));
+    const nav = useNavigation.getState();
+    expect(nav.pulseEntityId).toBe("s1");
+    expect(nav.panTarget).toEqual({ lat: 6.5, lng: 3.4 });
+  });
+
+  it("the step arrows reach a record of a story's own kind as they reach the card kinds", () => {
+    const signinNode: ScenarioNode = {
+      kind: "signin",
+      label: "Sign-in",
+      palette: "#66ccff",
+      source: "json",
+      timestamp: "timestamp",
+      primary: "${outcome}",
+      secondary: "${city}",
+    };
+    const s1 = manifestRowToEntity(signinNode, { id: "s1", timestamp: T_LOGIN, outcome: "success", city: "Lagos" });
+    usePivotData.setState({ entities: [s1] });
+    const items = buildTickerStream({ auth: [AUTH_ROW_1, AUTH_ROW_2], signin: [s1.fields] }, [authNode, signinNode]);
+    usePlayhead.setState({ playhead: MS_AUTH_1 });
+    const { unmount } = render(<TickerBar items={items} />);
+    fireEvent.click(screen.getByTitle("Next event"));
+    expect(useNavigation.getState().pulseEntityId).toBe("s1");
+    expect(usePlayhead.getState().playhead).toBe(MS_LOGIN);
+    unmount();
+    usePlayhead.setState({ playhead: MS_AUTH_2 });
+    render(<TickerBar items={items} />);
+    fireEvent.click(screen.getByTitle("Previous event"));
+    expect(useNavigation.getState().pulseEntityId).toBe("s1");
+    expect(usePlayhead.getState().playhead).toBe(MS_LOGIN);
+  });
+
   it("renders a non-FFR schema node (platform-readiness) and click is a safe no-op", () => {
     // Synthetic future schema: ecom_return is NOT in the FFR seed. The
     // row must render from node metadata alone via the same ${field}
-    // template contract the shipped manifests use; the navigate bridge
-    // has no EntityMatch variant for it, so click must not throw or fire.
+    // template contract the shipped manifests use; no entity of its kind
+    // is loaded in the pivot-data store, so click must not throw or fire.
     const returnNode: ScenarioNode = {
       kind: "ecom_return",
       label: "Return",

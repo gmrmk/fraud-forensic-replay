@@ -3,6 +3,10 @@ import { useSchema } from "../store/schema";
 import { useStoryInk } from "../store/kind-ink";
 import { genericCounts, type GenericCount } from "../lib/generic-entities";
 import type { Entity } from "../lib/entity";
+import { manifestPlaces } from "../lib/case-events";
+import { decisionInSolo } from "../lib/solo";
+import { overlaysOf } from "../lib/verdicts";
+import { useSoloIds } from "../hooks/useSoloIds";
 import { useLayers } from "../store/layers";
 import { useDrawInputs, useMarksStore, useRecordFacts } from "../store/marks";
 import { usePivotData } from "../store/pivot-data";
@@ -91,6 +95,8 @@ interface Props {
   loadError: string | null;
   /** Manifest-declared kinds of a non-bank pack (sign-ins, key events, usage ...). */
   genericByKind?: Record<string, Entity[]>;
+  /** The manifest-kind records the solo and the switches keep; only they, and a placed decision whose events the solo keeps, count as reached. Absent, every record counts. */
+  soloEntities?: Entity[];
 }
 
 /** Details indent: the 9 px square plus the 8 px gap on the left, so a region lines up with the
@@ -142,6 +148,7 @@ export function LayerPanels({
   visibleLogins,
   loadError,
   genericByKind,
+  soloEntities,
 }: Props) {
   const minTime = usePlayhead((s) => s.minTime);
   const maxTime = usePlayhead((s) => s.maxTime);
@@ -149,9 +156,22 @@ export function LayerPanels({
   // The counts are the one function's (lib/marks/draw): reached and shown over all, so they follow the
   // switches and the playhead together.
   const draw = useDrawInputs();
+  // The set of kept records is built once for each solo, not at each playhead tick. A placed decision is
+  // kept as the map keeps its capsule: when the solo holds an event it works, whatever its own fields hold.
+  const soloIds = useSoloIds();
+  const kept = useMemo(() => {
+    if (!soloEntities) return undefined;
+    const set = new Set(soloEntities);
+    if (soloIds && manifestPlaces(schemaNodes)) {
+      for (const d of overlaysOf(Object.values(genericByKind ?? {}).flat(), schemaNodes)) {
+        if (decisionInSolo(soloIds, d)) set.add(d.entity);
+      }
+    }
+    return set;
+  }, [soloEntities, soloIds, schemaNodes, genericByKind]);
   const generic = useMemo(
-    () => genericCounts(schemaNodes, genericByKind ?? {}, draw),
-    [schemaNodes, genericByKind, draw],
+    () => genericCounts(schemaNodes, genericByKind ?? {}, draw, kept),
+    [schemaNodes, genericByKind, draw, kept],
   );
   const hiddenKinds = useLayers((s) => s.hiddenKinds);
   const hiddenValues = useLayers((s) => s.hiddenValues);

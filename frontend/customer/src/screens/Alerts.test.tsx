@@ -1,6 +1,7 @@
-// The Alerts screen in the minute when only the declined Lagos attempt is visible: its callout
-// keeps the real distance from the last purchase and does not fall back to the word far. The
-// fixtures are made up (no card data); the clock and the data are set straight on the stores.
+// The Alerts screen before and during the Lagos minutes: with only an online test charge flagged it
+// lists the charge and names no Lagos activity, and once a Lagos attempt is visible its callout
+// keeps the real distance from the last purchase. The fixtures are made up (no card data); the
+// clock and the data are set straight on the stores.
 import { afterEach, beforeEach, it, expect } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { Alerts } from "./Alerts";
@@ -32,6 +33,17 @@ it("with only the declined attempt visible the callout prints the distance in mi
   expect(getByText("DECLINED")).toBeInTheDocument();
   expect(container.textContent).toMatch(/Card-present activity 6,526 mi from your last purchase/);
   expect(container.textContent).not.toMatch(/activity far from/);
+});
+
+it("with only an online test charge flagged the screen lists it and names no Lagos activity", () => {
+  useData.setState({
+    txns: [...txns, tx("probe", "2026-05-21T09:14:00-05:00", { is_card_present: 0, is_fraud: 1, amount: 1 })],
+  });
+  at("2026-05-21T09:15:00-05:00");
+  const { container, getByText } = render(<Alerts />);
+  expect(getByText("1 active")).toBeInTheDocument();
+  expect(container.textContent).not.toMatch(/Lagos/);
+  expect(container.textContent).not.toMatch(/Card-present activity/);
 });
 
 it("once the approved charge posts the callout still prints the same distance", () => {

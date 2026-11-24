@@ -37,12 +37,12 @@ def test_absent_replay_database_gets_one_line_with_both_build_commands(tmp_path:
 
 
 def test_another_absent_database_is_named_without_a_build_command(tmp_path: Path) -> None:
-    _scenario(tmp_path, "population", "data/population.db")
+    _scenario(tmp_path, "retail", "data/retail.db")
 
     lines = missing_data_lines(tmp_path)
 
     assert lines == [
-        "DATA NOT BUILT: data/population.db (scenario population): tests that need it will SKIP."
+        "DATA NOT BUILT: data/retail.db (scenario retail): tests that need it will SKIP."
     ]
 
 

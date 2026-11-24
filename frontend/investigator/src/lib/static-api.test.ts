@@ -177,6 +177,27 @@ describe("the static fetch", () => {
     });
   });
 
+  it("keeps the story it was made with when storage changes later in the page", async () => {
+    let stored = "card-fraud";
+    const asked: string[] = [];
+    const staticFetch = createStaticFetch({
+      base: "./",
+      index: INDEX,
+      scenarios: SCENARIOS,
+      fetchImpl: (async (input: RequestInfo | URL) => {
+        asked.push(String(input));
+        return json({});
+      }) as typeof fetch,
+      storage: { getItem: () => stored },
+      channel: { postMessage: () => {} },
+    });
+    stored = "priya-ato";
+    await staticFetch("/api/decisions");
+    const health = await (await staticFetch("/api/health")).json();
+    expect(asked).toEqual(["./static-api/card-fraud/decisions/_.json"]);
+    expect(health.scenario).toBe("card-fraud");
+  });
+
   it("answers a scenario switch without a server", async () => {
     const { staticFetch, asked } = harness();
     const ok = await staticFetch("/api/scenario/select", {

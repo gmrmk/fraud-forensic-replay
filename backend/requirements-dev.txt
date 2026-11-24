@@ -5,7 +5,3 @@
 ruff==0.15.15
 black==26.5.1
 mypy==2.1.0
-
-# Population generator (Sparkov) seed-time dep -- pinned so population.db stays
-# deterministic. numpy is already managed as an ML dep (requirements.txt).
-Faker==13.12.0

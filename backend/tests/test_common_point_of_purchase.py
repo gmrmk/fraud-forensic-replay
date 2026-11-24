@@ -24,8 +24,6 @@ MARCUS = "card-marcus-visa-001"
 CPP_TERMINAL = "ZEL-7731042"
 DETECTOR = "common-point-of-purchase"
 SCENARIOS = PROJECT_ROOT / "backend" / "scenarios"
-POPULATION_DB = PROJECT_ROOT / "data" / "population.db"
-POPULATION_MANIFEST = SCENARIOS / "population.scenario.json"
 
 
 def _manifest_rule(pack: str) -> dict:
@@ -41,12 +39,10 @@ def seeded_db(tmp_path_factory) -> Path:
     return db
 
 
-def _evaluate(
-    db: Path, focal: dict | None, pack: str = "card-fraud"
-) -> list[rules_module.Decision]:
+def _evaluate(db: Path, focal: dict | None) -> list[rules_module.Decision]:
     conn = connect(db)
     try:
-        return rules_module.evaluate(conn, [_manifest_rule(pack)], focal)
+        return rules_module.evaluate(conn, [_manifest_rule("card-fraud")], focal)
     finally:
         conn.close()
 
@@ -304,45 +300,3 @@ def test_seeded_population_signal_and_terminal_precision_recall(seeded_db):
 
     (decision,) = _evaluate(seeded_db, None)
     assert _precision_recall(_named_cards(seeded_db, decision), truth) == (1.0, 1.0)
-
-
-# The pack is its database and its manifest, and this test reads both (the manifest through
-# _manifest_rule), so it runs only where both are there.
-@pytest.mark.skipif(
-    not (POPULATION_DB.exists() and POPULATION_MANIFEST.exists()),
-    reason="population pack not built",
-)
-def test_population_pack_signal_and_terminal_precision_recall():
-    """Measured 2026-09-30 on data/population.db (199 cards, 29 ring cards). Card level:
-    the signal flags exactly the 29 ring cards (precision 1.00, recall 1.00). Terminal
-    level: the decision names exactly those 29 (the pump's 30th visitor is the ring's
-    reserved card, which carries no cash-out and so no signal). Floors: 0.95 / 0.95."""
-    from rules.common_point import _compromise_events
-
-    by_card, truth = _rows_by_card(POPULATION_DB)
-    flagged = {c for c, rows in by_card.items() if _compromise_events(rows)}
-    precision, recall = _precision_recall(flagged, truth)
-    assert precision >= 0.95
-    assert recall >= 0.95
-
-    decisions = _evaluate(POPULATION_DB, None, pack="population")
-    assert [_input(d, "Terminal") for d in decisions] == [CPP_TERMINAL]
-    assert _precision_recall(_named_cards(POPULATION_DB, decisions[0]), truth) == (1.0, 1.0)
-
-    victim = sorted(truth)[0]
-    (own,) = _evaluate(POPULATION_DB, {"card_id": victim}, pack="population")
-    assert _input(own, "Terminal") == CPP_TERMINAL
-    conn = connect(POPULATION_DB)
-    try:
-        at_pump = {
-            r[0]
-            for r in conn.execute(
-                "SELECT DISTINCT card_id FROM transactions WHERE terminal_id = ?", (CPP_TERMINAL,)
-            )
-        }
-    finally:
-        conn.close()
-    exposed_not_compromised = at_pump - truth  # the reserved ring card: visited, no cash-out
-    assert exposed_not_compromised
-    for card_id in (sorted(set(by_card) - at_pump)[0], *sorted(exposed_not_compromised)):
-        assert _evaluate(POPULATION_DB, {"card_id": card_id}, pack="population") == []

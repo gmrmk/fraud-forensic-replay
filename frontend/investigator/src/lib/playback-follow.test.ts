@@ -6,7 +6,6 @@ import {
   IN_VIEW_MAX_DEG,
   activeFollowTarget,
   atOpeningZoom,
-  degDistance,
   equatorZoom,
   flatMidpoint,
   followMove,
@@ -15,7 +14,6 @@ import {
   greatCircleDeg,
   greatCircleMidpoint,
   placeInView,
-  shouldRecenter,
   type FollowEvent,
   type FollowViewMap,
   type LngLat,
@@ -49,27 +47,6 @@ describe("activeFollowTarget", () => {
   });
 });
 
-describe("degDistance", () => {
-  it("is zero for the same point", () => {
-    expect(degDistance({ lng: 0, lat: 0 }, { lng: 0, lat: 0 })).toBe(0);
-  });
-  it("is symmetric", () => {
-    const a = { lng: -95.4, lat: 29.8 }, b = { lng: 3.4, lat: 6.5 };
-    expect(degDistance(a, b)).toBeCloseTo(degDistance(b, a), 6);
-  });
-});
-
-describe("shouldRecenter", () => {
-  it("holds (no re-center) within a tight cluster (Houston-scale)", () => {
-    const a = { lng: -95.40, lat: 29.80 }, b = { lng: -95.55, lat: 29.70 };
-    expect(shouldRecenter(a, b, 15)).toBe(false);
-  });
-  it("re-centers on a far jump (Houston -> Lagos)", () => {
-    const hou = { lng: -95.4, lat: 29.8 }, lag = { lng: 3.4, lat: 6.5 };
-    expect(shouldRecenter(hou, lag, 15)).toBe(true);
-  });
-});
-
 // ---- The calmer follow: frame the places and hold ----
 
 const HOU: LngLat = { lng: -95.4, lat: 29.8 };
@@ -81,8 +58,11 @@ describe("greatCircleDeg", () => {
     expect(greatCircleDeg({ lng: 0, lat: 0 }, { lng: 90, lat: 0 })).toBeCloseTo(90, 6);
     expect(greatCircleDeg({ lng: 12, lat: 0 }, { lng: 40, lat: 90 })).toBeCloseTo(90, 6);
   });
-  it("is 150 for 150 degrees of longitude on the equator, where degDistance reads the same only by luck", () => {
+  it("is 150 for 150 degrees of longitude on the equator", () => {
     expect(greatCircleDeg({ lng: 0, lat: 0 }, { lng: 150, lat: 0 })).toBeCloseTo(150, 6);
+  });
+  it("is 180 for two places on opposite sides of the globe", () => {
+    expect(greatCircleDeg({ lng: 0, lat: 0 }, { lng: 180, lat: 0 })).toBeCloseTo(180, 6);
   });
   it("takes the short way across the antimeridian", () => {
     expect(greatCircleDeg({ lng: 179, lat: 0 }, { lng: -179, lat: 0 })).toBeCloseTo(2, 6);

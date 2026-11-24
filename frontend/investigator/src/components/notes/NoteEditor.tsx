@@ -19,6 +19,8 @@ import { TEXT_NAME } from "../../lib/tooltip-words/notes";
 interface Props {
   /** The body to start from, checked on the way in. */
   initialBody: unknown;
+  /** Whether the view takes focus when it mounts. */
+  autoFocus: boolean;
   handleRef: MutableRefObject<EditorHandle | null>;
   onChange: (s: EditorSnapshot) => void;
   onRefuse: (code: RefusalCode) => void;
@@ -34,7 +36,7 @@ const HOST =
   "[&_p]:my-0 [&_ul]:my-0.5 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:my-0.5 [&_ol]:list-decimal [&_ol]:pl-4 " +
   "[&_blockquote]:my-0.5 [&_blockquote]:border-l-2 [&_blockquote]:border-panel-border-strong [&_blockquote]:pl-2 [&_blockquote]:text-muted";
 
-export function NoteEditor({ initialBody, handleRef, onChange, onRefuse, onSave, onBlur }: Props) {
+export function NoteEditor({ initialBody, autoFocus, handleRef, onChange, onRefuse, onSave, onBlur }: Props) {
   const host = useRef<HTMLDivElement | null>(null);
   // The latest callbacks, read by the view's long-lived handlers (set after each render).
   const cb = useRef({ onChange, onRefuse, onSave, onBlur });
@@ -78,12 +80,12 @@ export function NoteEditor({ initialBody, handleRef, onChange, onRefuse, onSave,
       getState: () => view.state,
     };
     cb.current.onChange(snapshotOf(view.state));
-    view.focus();
+    if (autoFocus) view.focus();
     return () => {
       handleRef.current = null;
       view.destroy();
     };
-    // The body goes in once, at mount: the window holds the person's text from then on.
+    // The body and the focus go in once, at mount: the window holds the person's text from then on.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

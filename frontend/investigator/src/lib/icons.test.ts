@@ -126,10 +126,10 @@ describe("the repository's own stories", () => {
   // named here on purpose.
   const EXPECTED_FALLBACKS: readonly string[] = [];
   const BUILT_IN = new Set(["auth", "fraud", "login", "place", "account_event", "transfer"]);
-  // The public copy leaves these two manifests out (SKIP in scripts/export-public.mjs), so the folder
-  // holds ten files in the working repository and eight in the copy. The eight that ship are pinned by
-  // name, and every manifest that is there is read, in either tree.
-  const LEFT_OUT_OF_THE_COPY = ["card-fraud-concordia.scenario.json", "population.scenario.json"];
+  // The public copy leaves this manifest out (SKIP in scripts/export-public.mjs), so the folder
+  // holds nine files in the working repository and eight in the copy. The eight that ship are pinned
+  // by name, and every manifest that is there is read, in either tree.
+  const LEFT_OUT_OF_THE_COPY = ["card-fraud-concordia.scenario.json"];
   const SHIPPED = [
     "agent-runs-shared-key.scenario.json",
     "card-fraud.scenario.json",

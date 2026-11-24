@@ -227,6 +227,20 @@ describe("GlobeBadgeLayer: the Layers switches", () => {
     expect(capsules(fm.container)).toHaveLength(0);
   });
 
+  it("a switched-off decision kind still clears the flag of the event its decision worked", () => {
+    useLayers.setState({ hiddenKinds: ["verdict_export"] });
+    render(<GlobeBadgeLayer map={fm.map} />);
+    expect(screen.queryByText("rule-x ×2")).toBeNull();
+    expect(screen.getByText("rule-x")).toBeInTheDocument(); // r2 is still queued: no decision works it
+  });
+
+  it("a switched-off status value still clears the flag of the event its decision worked", () => {
+    useLayers.setState({ hiddenValues: { verdict_export: ["FAIL"] } });
+    render(<GlobeBadgeLayer map={fm.map} />);
+    expect(screen.queryByText("rule-x ×2")).toBeNull();
+    expect(screen.getByText("rule-x")).toBeInTheDocument();
+  });
+
   it("a switched-off status value draws the other statuses' capsules and not its own", () => {
     useLayers.setState({ hiddenValues: { verdict_export: ["FAIL"] } });
     render(<GlobeBadgeLayer map={fm.map} />);

@@ -119,7 +119,9 @@ export function createStaticFetch(ctx: StaticFetchContext): typeof fetch {
   const root = `${ctx.base}static-api/`;
   const shipped = new Map(ctx.scenarios.map((s) => [s.id, s]));
 
-  const active = (): string => {
+  // Resolved once: every story pick reloads the page and makes a new adapter, so a page reads the
+  // story it opened on even when storage names another one later (a reload the visitor cancelled).
+  const active = ((): string => {
     let stored: string | null = null;
     try {
       stored = ctx.storage.getItem(SCENARIO_PREF_KEY);
@@ -129,7 +131,7 @@ export function createStaticFetch(ctx: StaticFetchContext): typeof fetch {
     if (stored !== null && shipped.has(stored)) return stored;
     const linked = new URLSearchParams(ctx.search ?? "").get("scenario");
     return linked !== null && shipped.has(linked) ? linked : ctx.index.default;
-  };
+  })();
 
   // The backend relay remembered the last playhead for a customer tab that opened late.
   // A channel has no memory, so a tab that says hello is answered with the last one sent.
@@ -160,12 +162,12 @@ export function createStaticFetch(ctx: StaticFetchContext): typeof fetch {
 
     if (path === "/api/scenarios") return ctx.fetchImpl(`${root}scenarios.json`);
     if (path === "/api/health") {
-      return jsonResponse({ status: "ok", boot_id: `static-${ctx.index.build}`, scenario: active() });
+      return jsonResponse({ status: "ok", boot_id: `static-${ctx.index.build}`, scenario: active });
     }
     // Places are not part of the static build (the cache names real businesses).
     if (path === "/api/places") return jsonResponse([]);
     // A missing file comes back as its 404, so the caller reports an error, not empty data.
-    return ctx.fetchImpl(`${root}${active()}/${staticPath(url)}`);
+    return ctx.fetchImpl(`${root}${active}/${staticPath(url)}`);
   };
 }
 

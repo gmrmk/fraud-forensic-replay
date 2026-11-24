@@ -50,6 +50,7 @@ export function Alerts() {
               <TxnRow key={tx.id} tx={tx} />
             ))}
           </div>
+          {lagos && (
           <div className="bg-fraud-bg border border-fraud-line rounded-[13px] px-4 py-3 flex items-start gap-3">
             <div
               className="bg-fraud text-white flex items-center justify-center font-extrabold rounded-[8px] flex-none mt-0.5"
@@ -62,7 +63,7 @@ export function Alerts() {
                 Transactions detected in Lagos, Nigeria
               </div>
               <div className="text-muted mt-1" style={{ fontSize: 12 }}>
-                Card-present activity {lagos ? `${Math.round(lagos.miles).toLocaleString("en-US")} mi` : "far"} from your
+                Card-present activity {Math.round(lagos.miles).toLocaleString("en-US")} mi from your
                 last purchase. If you are not currently in Nigeria, these charges are likely unauthorized.
               </div>
               <button
@@ -74,6 +75,7 @@ export function Alerts() {
               </button>
             </div>
           </div>
+          )}
         </div>
       )}
     </div>

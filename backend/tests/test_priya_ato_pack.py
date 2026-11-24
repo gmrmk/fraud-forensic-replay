@@ -96,7 +96,7 @@ def test_decision_carries_quantified_kill_chain_evidence(tmp_path):
     finally:
         conn.close()
     by_label = {e["label"]: e["value"] for e in d.evidence}
-    assert "median P2P" in by_label["Amount vs baseline"]  # $4,200 vs her ~$45 median
+    assert "median P2P" in by_label["Amount vs baseline"]  # $4,200 vs her ~$40 median
     assert "zero prior payment history" in by_label["Beneficiary age"]
     assert "BLOCKED" in by_label["System response"]
     assert "velocity rule" in by_label["System response"]

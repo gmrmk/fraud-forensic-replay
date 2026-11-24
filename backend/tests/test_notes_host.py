@@ -220,6 +220,14 @@ class TestHost:
     def test_a_loopback_origin_passes(self, client: TestClient, route: Any, origin: str) -> None:
         assert call(client, route, host="127.0.0.1:8000", origin=origin).status_code != 403
 
+    # The dev server's proxy forwards the page's own Host, so these reach the backend as sent.
+    @pytest.mark.parametrize("own", ["localhost:5173", "127.0.0.1:5173", "[::1]:5173"])
+    def test_the_dev_servers_own_host_and_origin_pass(
+        self, client: TestClient, route: Any, own: str
+    ) -> None:
+        assert call(client, route, host=own, origin=f"http://{own}").status_code != 403
+        assert call(client, route, host=own).status_code != 403
+
     def test_no_origin_passes(self, client: TestClient, route: Any) -> None:
         assert call(client, route, host="localhost").status_code != 403
 

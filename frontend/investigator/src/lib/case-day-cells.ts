@@ -17,6 +17,9 @@ import {
   transferToEntity,
 } from "./adapters/ffr-seed";
 import { dayCells, type StoryTick } from "./timeline-story";
+import { dotKinds } from "./case-events";
+import { useSchema } from "../store/schema";
+import type { Entity } from "./entity";
 import type { DayDensityCell } from "../components/timeline/TimelineShell";
 import type { AccountEvent, Transaction, LoginEvent, Transfer } from "../types";
 
@@ -25,9 +28,11 @@ export function useCaseDayCells(
   logins: LoginEvent[] | undefined,
   accountEvents: AccountEvent[] | undefined,
   transfers: Transfer[] | undefined,
+  genericEntities: Entity[] | undefined,
 ): DayDensityCell[] {
   const windowMin = usePlayhead((s) => s.windowMin);
   const windowMax = usePlayhead((s) => s.windowMax);
+  const nodes = useSchema((s) => s.nodes);
   const span = windowMax - windowMin;
   return useMemo(() => {
     if (span <= 0) return [];
@@ -38,11 +43,14 @@ export function useCaseDayCells(
     const blockedIds = new Set(
       (transfers ?? []).filter((t) => t.status === "blocked").map((t) => t.id),
     );
+    // A manifest kind counts where the track draws it as a dot, as the step keys walk it.
+    const dots = dotKinds(nodes);
     const all = [
       ...transactions.map(transactionToEntity),
       ...(logins ?? []).map(loginToEntity),
       ...(accountEvents ?? []).map(accountEventToEntity),
       ...(transfers ?? []).map(transferToEntity),
+      ...(genericEntities ?? []).filter((e) => dots.has(e.kind)),
     ];
     const storyTicks: StoryTick[] = all
       .filter((e) => e.timestamp >= windowMin && e.timestamp <= windowMax)
@@ -55,5 +63,5 @@ export function useCaseDayCells(
           newDeviceIds.has(e.id) || blockedIds.has(e.id) || e.kind === "fraud",
       }));
     return dayCells(storyTicks, windowMin, windowMax);
-  }, [transactions, logins, accountEvents, transfers, windowMin, windowMax, span]);
+  }, [transactions, logins, accountEvents, transfers, genericEntities, nodes, windowMin, windowMax, span]);
 }

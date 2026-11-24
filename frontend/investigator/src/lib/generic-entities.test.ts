@@ -169,6 +169,14 @@ describe("genericCounts: values, switches and tones", () => {
     expect(c.values.find((v) => v.value === "")).toMatchObject({ visible: 1, total: 1 });
   });
 
+  it("counts only the kept records as reached, and keeps each total and every value over the whole list", () => {
+    // A solo keeps s2 and s4: s2 is corporate and reached, s4 is education and ahead of the playhead.
+    const kept = new Set([signs[1], signs[3]]);
+    const [c] = genericCounts([signNode], { sign: signs }, drawFixture({ ...at250, filterField: fieldOf }), kept);
+    expect(c).toMatchObject({ visible: 1, total: 5 });
+    expect(c.values.map((v) => [v.value, v.visible, v.total])).toEqual([["corporate", 1, 3], ["", 0, 1], ["education", 0, 1]]);
+  });
+
   it("keeps a value named like an inherited key as an ordinary value", () => {
     const odd = [mk("o1", 100, { net: "constructor" }), mk("o2", 100, { net: "__proto__" }), mk("o3", 100, { net: "constructor" })];
     const [c] = genericCounts([signNode], { sign: odd }, drawFixture({ ...at250, filterField: fieldOf }));

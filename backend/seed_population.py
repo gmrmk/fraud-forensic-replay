@@ -2,7 +2,7 @@
 
 Extends the single-customer Marcus generators in seed.py to a population.
 Each customer is generated from its own random.Random(seed) so generation is
-order-independent and idempotent (re-seed -> identical rows)."""
+order-independent and repeatable (a fresh file seeds to the same rows)."""
 
 from __future__ import annotations
 

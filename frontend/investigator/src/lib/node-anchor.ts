@@ -49,6 +49,7 @@
  * layer supplies camera altitude from map.transform.
  */
 import type { EntityMatch } from "./matches";
+import { greatCircleDeg } from "./playback-follow";
 
 export interface LngLat {
   lng: number;
@@ -74,19 +75,8 @@ export function entityLngLat(e: EntityMatch): LngLat | null {
   }
 }
 
-const DEG = Math.PI / 180;
-
-/** Central angle between two lng/lat points, in degrees. */
-export function angularDistanceDeg(a: LngLat, b: LngLat): number {
-  const φ1 = a.lat * DEG, φ2 = b.lat * DEG;
-  const Δλ = (b.lng - a.lng) * DEG;
-  const cosc =
-    Math.sin(φ1) * Math.sin(φ2) + Math.cos(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-  return Math.acos(Math.min(1, Math.max(-1, cosc))) / DEG;
-}
-
 /** Hemisphere test: is `point` behind the globe relative to a camera
  *  looking at `center`? */
 export function isOccludedByGlobe(center: LngLat, point: LngLat): boolean {
-  return angularDistanceDeg(center, point) >= 90;
+  return greatCircleDeg(center, point) >= 90;
 }

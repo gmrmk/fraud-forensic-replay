@@ -361,9 +361,9 @@ def test_at_least_one_decline_before_first_success(tmp_path) -> None:
     assert declines, "expected >=1 declined fraud attempt"
 
 
-def test_seed_main_is_idempotent(tmp_path) -> None:
-    """Running seed.main() twice produces the same row count + same IDs."""
-    db = tmp_path / "idempotent.db"
+def test_two_seeds_on_fresh_files_give_identical_rows(tmp_path) -> None:
+    """seed.main() on two fresh files produces the same row count + same IDs."""
+    db = tmp_path / "first.db"
     seed.main(db_path=db)
     conn = connect(db)
     try:
@@ -374,6 +374,7 @@ def test_seed_main_is_idempotent(tmp_path) -> None:
         conn.close()
     assert len(rows1) > 0, "first seed produced no transactions"
 
+    db = tmp_path / "second.db"
     seed.main(db_path=db)
     conn = connect(db)
     try:
@@ -390,6 +391,36 @@ def test_seed_main_is_idempotent(tmp_path) -> None:
             b["amount"],
             b["timestamp"],
         )
+
+
+@pytest.mark.parametrize(
+    "first, second",
+    [(True, False), (False, False), (False, True)],
+    ids=["population-then-plain", "plain-then-plain", "plain-then-population"],
+)
+def test_seed_refuses_a_database_that_holds_a_story(tmp_path, first, second) -> None:
+    """A second seed on one file would keep the first run's rows beside its own: it refuses,
+    names the file, and leaves the file's bytes as they were."""
+    db = tmp_path / "built.db"
+    seed.main(db_path=db, with_population=first)
+    before = db.read_bytes()
+    with pytest.raises(FileExistsError, match="remove it first") as refused:
+        seed.main(db_path=db, with_population=second)
+    assert str(db) in str(refused.value)
+    assert db.read_bytes() == before
+
+
+@pytest.mark.parametrize("with_population", [False, True])
+def test_seed_fills_a_database_with_its_tables_and_no_rows(tmp_path, with_population) -> None:
+    db = tmp_path / "empty.db"
+    init_db(db)
+    seed.main(db_path=db, with_population=with_population)
+    conn = connect(db)
+    try:
+        cards = conn.execute("SELECT COUNT(*) FROM cards").fetchone()[0]
+    finally:
+        conn.close()
+    assert cards == (301 if with_population else 1)
 
 
 def test_main_seeds_population_and_ring(tmp_path):

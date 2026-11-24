@@ -14,11 +14,14 @@ from pathlib import Path
 from typing import TypedDict
 
 from arcs import detect_arcs
-from db import connect, init_db
+from db import connect, get_active_db, init_db
 from seed_population import generate_population, jitter_rng, make_profiles
 from seed_ring import make_harvest_swipe, victim_positions, weave_skimmer_ring
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# The tables main() writes; a row in any of them means the file already holds a story.
+_STORY_TABLES = ("customers", "accounts", "cards", "transactions", "login_events", "arcs")
 
 SEED = 26052026  # deterministic; change to regenerate
 
@@ -476,8 +479,7 @@ def generate_transactions(
             txs.append(
                 {
                     # `id` filled below after sort so IDs match chronological order.
-                    # Deterministic across runs (same SEED + same code = same IDs),
-                    # so INSERT OR REPLACE truly replaces on re-seed.
+                    # Deterministic across runs (same SEED + same code = same IDs).
                     "id": "",
                     "card_id": card_id,
                     "account_id": account_id,
@@ -900,8 +902,7 @@ def generate_logins(
 
     Distribution: ~2-3 per day, biased to morning + evening windows,
     mostly success with occasional step-up challenges he passes. IDs
-    are derived from sorted position -- re-seed produces identical IDs
-    so INSERT OR REPLACE truly replaces.
+    are derived from sorted position, so two fresh files get identical IDs.
 
     Passing `rng` makes generation order-independent and per-customer
     deterministic. With `rng=None` a fresh `random.Random(SEED)` is used,
@@ -1020,14 +1021,30 @@ def insert_cards(conn, rows: list[dict]) -> None:
 
 
 def main(db_path: Path | None = None, *, with_population: bool = False) -> None:
-    """Seed the DB. Idempotent -- re-running produces identical rows.
+    """Seed a database that holds no story: a new file, or one with the tables and no rows.
 
-    Each generator defaults to `random.Random(SEED)` internally, so
-    determinism flows from the per-function RNG, not from any module-level
-    state. Transaction IDs are derived from sorted position
-    (`tx-<card_id>-<NNNN>`), so INSERT OR REPLACE truly replaces instead
-    of appending.
+    A database that already holds rows in a table the seed writes is refused with
+    FileExistsError before anything is written: a second run would keep the first run's rows
+    beside its own. Each generator defaults to `random.Random(SEED)` internally, so two fresh
+    files seed to identical rows, apart from customers.created_at, which the schema fills from
+    the clock. Transaction IDs are derived from sorted position (`tx-<card_id>-<NNNN>`).
     """
+    path = db_path or get_active_db()
+    if path.exists():
+        conn = connect(path)
+        try:
+            tables = {
+                r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
+            }
+            held = any(
+                conn.execute(f"SELECT 1 FROM {t} LIMIT 1").fetchone()
+                for t in _STORY_TABLES
+                if t in tables
+            )
+        finally:
+            conn.close()
+        if held:
+            raise FileExistsError(f"{path} already holds a story: remove it first, then seed again")
     init_db(db_path)
     conn = connect(db_path)
     try:

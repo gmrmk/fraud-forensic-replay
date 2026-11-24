@@ -11,12 +11,14 @@ same playhead, so you see what the customer saw. All data is synthetic.
 
 https://gmrmk.github.io/fraud-forensic-replay/
 
-## 3. The three stories
+## 3. Three of the eight stories
 
-Each story is a scenario: one case with its own data. Each opens in the investigator app at its
-share link. The address bar keeps in step with the scenario, the moment, the camera, the selection
-and the theme, so a copied address reopens the same view. In the app's Scenario menu the three
-are listed as "Card · Houston→Lagos", "Account · Houston ATO" and "Platform · key takeover".
+Eight stories ship in this copy, and the app's Scenario menu lists all eight. Three are described
+here. Each story is a scenario: one case with its own data. Each opens in the investigator app at
+its share link. The address bar keeps in step with the scenario, the moment, the camera, the
+selection and the theme, so a copied address reopens the same view. In the Scenario menu the three
+described here are listed as "Card · Houston→Lagos", "Account · Houston ATO" and "Platform · key
+takeover".
 
 **Card fraud** (`card-fraud`). A Houston cardholder, Marcus Chen, buys fuel at a pump that 30 of
 the book's 301 cards used. All 30 later show fraud, and the investigator's notes name the pump as
@@ -88,11 +90,11 @@ first (command 3).
      `static-crawl: every check passed`.
 
 If `data/replay.db` has not been built, pytest says so in its header and names the two commands
-that build it. In this copy the pytest step of command 4 ends with 2,770 tests passed and 35
-skipped, and each skipped test prints its reason: 18 read a file that is not part of the copy (the
-profiles document and the manifests of two data sets), 3 need one of those two data sets built, 12
-apply only to a scenario with a rule that the scenario under test does not declare, and 2 ask
-something of a git checkout or of a folder that this copy does not have.
+that build it. In this copy the pytest step of command 4 skips some tests, and each skipped test
+prints its reason: it reads a file that is not part of the copy (the profiles document, or the
+manifest or database of a data set the copy leaves out), it applies only to a scenario with a rule
+that the scenario under test does not declare, or it asks something of a git checkout or of a
+folder that this copy does not have. No test fails when the gate ends with `CRAFT GATE: GREEN`.
 
 ## 6. How the data is made
 
@@ -105,9 +107,10 @@ build.
 The scoring step finds its model by the database's file name, so the file must be called
 `replay.db`.
 
-The other two stories are tracked files, not built by command 3: `data/priya-ato.db` for the
-account takeover, and the JSON files under `data/platform-access/` for the token spend story
-(`data/platform-access.db` holds the tables and no rows). The authored decision notes for each
+The other seven stories are tracked files, not built by command 3: `data/priya-ato.db` for the
+account takeover, the JSON files under `data/platform-access/` for the token spend story
+(`data/platform-access.db` holds the tables and no rows), and `data/<story id>.db` with the folder
+`data/<story id>/` for each of the five not described here. The authored decision notes for each
 story are in `data/<story id>/decision.json`.
 
 ## 7. Honest limits
@@ -129,7 +132,7 @@ story are in `data/<story id>/decision.json`.
   dollars. The token spend story's timestamps are stored in UTC. The app shows every time in
   Houston time.
 - `backend/places.py` can look up real businesses near a point, for map context. It needs a key
-  that this copy does not have, none of the three stories uses it, and the running app reads only
+  that this copy does not have, none of the eight stories uses it, and the running app reads only
   its cache.
 - Locations taken from network addresses are city level.
 - Distances are great-circle distances.

@@ -305,7 +305,8 @@ describe("App: the selected record stays in the lists while its kind is off", ()
 describe("App: a manifest kind", () => {
   it("is on the globe with nothing hidden and leaves it when its kind is switched off", async () => {
     useSchema.getState().setActive("layers-test", [...CARD_NODES, WIDGET]);
-    await mounted();
+    render(<App />);
+    await waitFor(() => expect(seen.globe?.transactions).toHaveLength(4));
     await waitFor(() => expect(ids(seen.globe?.genericEntities)).toEqual(["w1"]));
     await layers({ hiddenKinds: ["widget"] });
     expect(ids(seen.globe?.genericEntities)).toEqual([]);
@@ -313,5 +314,13 @@ describe("App: a manifest kind", () => {
     expect(ids(seen.globe?.transactions)).toEqual(["a1", "f1", "f2", "f3"]);
     await layers({ hiddenKinds: [] });
     expect(ids(seen.globe?.genericEntities)).toEqual(["w1"]);
+  });
+
+  it("streams into the ticker and leaves it when its kind is switched off", async () => {
+    useSchema.getState().setActive("layers-test", [...CARD_NODES, WIDGET]);
+    render(<App />);
+    await waitFor(() => expect(ids(seen.stack?.tickerItems)).toEqual([...ALL_TICKER, "w1"].sort()));
+    await layers({ hiddenKinds: ["widget"] });
+    expect(ids(seen.stack?.tickerItems)).toEqual([...ALL_TICKER].sort());
   });
 });

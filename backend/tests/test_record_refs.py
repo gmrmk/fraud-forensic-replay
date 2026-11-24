@@ -41,7 +41,7 @@ DECLARED: dict[tuple[str, str], dict[str, list[str]]] = {
 # on it would offer a link to itself.
 NOTHING_DECLARED = [(PLATFORM, "org")]
 # Manifests that declare no ref at all.
-PACKS_WITHOUT_REFS = ["population", "card-fraud-concordia"]
+PACKS_WITHOUT_REFS = ["card-fraud-concordia"]
 
 
 def _load(story: str) -> sr.Manifest:
@@ -89,8 +89,8 @@ def test_a_node_outside_the_table_declares_no_ref(manifests):
                 assert "refs" not in node, (story, node["kind"])
 
 
-def test_the_two_packs_the_stories_do_not_need_declare_nothing():
-    # Both manifests are left out of the public copy (it holds neither pack).
+def test_the_pack_the_stories_do_not_need_declares_nothing():
+    # The manifest is left out of the public copy (it does not hold the pack).
     require_files(*(SCENARIOS / f"{story}.scenario.json" for story in PACKS_WITHOUT_REFS))
     for story in PACKS_WITHOUT_REFS:
         manifest = _load(story)

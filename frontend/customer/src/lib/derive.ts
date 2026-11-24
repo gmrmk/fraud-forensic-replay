@@ -22,7 +22,7 @@ export function fraudAlerted(visible: readonly Transaction[]): boolean {
 export const maskBrand = (s: string): string => s.replace(/visa/gi, (m) => `${m[0]}***`);
 
 // The greeting and date follow the replay clock in Marcus's own time zone, not the viewer's today.
-const HOUSTON = "America/Chicago";
+export const HOUSTON = "America/Chicago";
 export function greetingFor(t: number): string {
   const h = Number(new Date(t).toLocaleString("en-US", { hour: "numeric", hourCycle: "h23", timeZone: HOUSTON }));
   return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
